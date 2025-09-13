@@ -16,7 +16,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI mechtrackOpenAPI() {
         Server devServer = new Server();
-        devServer.setUrl("http://localhost:8080");
+        devServer.setUrl("http://localhost:8081");
         devServer.setDescription("Development Server");
 
         Server prodServer = new Server();
@@ -46,4 +46,4 @@ public class OpenApiConfig {
                 .info(info)
                 .servers(List.of(devServer, prodServer));
     }
-} 
+}
