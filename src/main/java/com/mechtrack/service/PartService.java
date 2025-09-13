@@ -37,18 +37,25 @@ public class PartService {
 
 
 
-    public PartDto addPartToJob(UUID jobId, CreatePartRequest request) {
+    public PartDto addPartToJob(UUID jobId, CreatePartRequest request, MultipartFile file) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new EntityNotFoundException("Job", jobId.toString()));
 
         Part part = new Part();
         part.setName(request.getName());
         part.setCost(request.getCost());
-        part.setInvoiceImageUrl(request.getInvoiceImageUrl());
         part.setPurchaseDate(request.getPurchaseDate());
         part.setJob(job);
 
+        if (file != null && !file.isEmpty()) {
+            validateFile(file);
+            String storedFileName = fileStorageService.store(file, "invoices");
+            part.setInvoiceImageUrl(storedFileName);
+            log.info("Invoice image uploaded for part: {}", storedFileName);
+        }
+
         Part savedPart = partRepository.save(part);
+        log.info("Part created successfully: {} for job: {}", savedPart.getId(), jobId);
         return convertToDto(savedPart);
     }
 
@@ -191,4 +198,4 @@ public class PartService {
         dto.setJobId(part.getJob() != null ? part.getJob().getId() : null);
         return dto;
     }
-} 
+}

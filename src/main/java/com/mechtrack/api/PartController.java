@@ -7,7 +7,6 @@ import com.mechtrack.service.PartService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -18,6 +17,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +25,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,26 +41,30 @@ public class PartController {
 
     @PostMapping("/jobs/{jobId}/parts")
     @Operation(
-        summary = "Add a part to a job",
-        description = "Associates a new automotive part with an existing repair job."
+        summary = "Add a part to a job with optional invoice image",
+        description = "Creates a new automotive part and optionally uploads its invoice image in one request."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "201", 
-            description = "Part added to job successfully",
+            description = "Part created successfully with optional invoice image uploaded",
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = PartDto.class)
             )
         ),
         @ApiResponse(responseCode = "404", description = "Job not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid request data")
+        @ApiResponse(responseCode = "400", description = "Invalid request data or file upload failed")
     })
     public ResponseEntity<PartDto> addPartToJob(
             @Parameter(description = "Job ID", required = true) @PathVariable UUID jobId,
-            @Parameter(description = "Part details", required = true) @Valid @RequestBody CreatePartRequest request) {
-        
-        PartDto createdPart = partService.addPartToJob(jobId, request);
+            @Parameter(description = "Part name", required = true) @RequestParam String name,
+            @Parameter(description = "Part cost", required = true) @RequestParam BigDecimal cost,
+            @Parameter(description = "Purchase date (YYYY-MM-DD)", required = true) @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate purchaseDate,
+            @Parameter(description = "Invoice image file (optional)") @RequestParam(value = "file", required = false) MultipartFile file) {
+
+        CreatePartRequest request = new CreatePartRequest(name, cost, null, purchaseDate);
+        PartDto createdPart = partService.addPartToJob(jobId, request, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdPart);
     }
 
@@ -275,4 +281,4 @@ public class PartController {
             return MediaType.APPLICATION_OCTET_STREAM_VALUE;
         }
     }
-} 
+}

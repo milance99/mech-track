@@ -1,0 +1,798 @@
+{
+	"info": {
+		"_postman_id": "mech-track-api-collection",
+		"name": "MechTrack API",
+		"description": "Complete API collection for MechTrack - Automotive Workshop Management System\n\nThis collection includes all endpoints for:\n- Authentication (JWT-based)\n- Job Management (CRUD operations)\n- Parts Management (CRUD + File Upload)\n- Analytics & Reporting\n\nBase URL: http://localhost:8081\nAuthentication: Bearer Token (JWT)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-set base URL if not defined",
+					"if (!pm.variables.get('base_url')) {",
+					"    pm.variables.set('base_url', 'http://localhost:8081');",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"description": "Authentication endpoints for workshop owner login and token management",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('jwt_token', response.token);",
+									"    pm.environment.set('username', response.username);",
+									"    console.log('JWT token saved to environment');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"test_owner\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Authenticate workshop owner and receive JWT token"
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/validate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "validate"]
+						},
+						"description": "Validate if JWT token is still valid and not expired"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Jobs Management",
+			"description": "Complete CRUD operations for automotive repair jobs",
+			"item": [
+				{
+					"name": "Create Job",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customerName\": \"John Smith\",\n    \"carModel\": \"Toyota Camry 2020\",\n    \"description\": \"Oil change and brake inspection\",\n    \"date\": \"2023-12-01\",\n    \"income\": 150.00\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/jobs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs"]
+						},
+						"description": "Create a new automotive repair job"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Jobs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/jobs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs"]
+						},
+						"description": "Retrieve all jobs in the system"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Jobs (Paginated)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/jobs/paged?page=0&size=10&sort=date,desc",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs", "paged"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "date,desc"
+								}
+							]
+						},
+						"description": "Retrieve paginated list of jobs with sorting"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Job by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/jobs/{{job_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs", "{{job_id}}"]
+						},
+						"description": "Retrieve a specific job by its UUID"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Jobs",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/jobs/search?customer=John&car=Toyota&from=2023-01-01&to=2023-12-31&minIncome=100&maxIncome=1000",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs", "search"],
+							"query": [
+								{
+									"key": "customer",
+									"value": "John",
+									"description": "Customer name (partial match)"
+								},
+								{
+									"key": "car",
+									"value": "Toyota",
+									"description": "Car model (partial match)"
+								},
+								{
+									"key": "from",
+									"value": "2023-01-01",
+									"description": "Start date (YYYY-MM-DD)"
+								},
+								{
+									"key": "to",
+									"value": "2023-12-31",
+									"description": "End date (YYYY-MM-DD)"
+								},
+								{
+									"key": "minIncome",
+									"value": "100",
+									"description": "Minimum income"
+								},
+								{
+									"key": "maxIncome",
+									"value": "1000",
+									"description": "Maximum income"
+								}
+							]
+						},
+						"description": "Search jobs by various criteria (all parameters optional)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Job",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customerName\": \"John Smith Updated\",\n    \"carModel\": \"Toyota Camry 2020\",\n    \"description\": \"Oil change, brake inspection, and tire rotation\",\n    \"date\": \"2023-12-01\",\n    \"income\": 200.00\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/jobs/{{job_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs", "{{job_id}}"]
+						},
+						"description": "Update an existing job with new details"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Job",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/jobs/{{job_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs", "{{job_id}}"]
+						},
+						"description": "Permanently delete a job and all associated parts"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Parts Management",
+			"description": "CRUD operations for automotive parts with file upload capabilities",
+			"item": [
+				{
+					"name": "Create Part (with optional file upload)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Brake Pads",
+									"type": "text",
+									"description": "Part name"
+								},
+								{
+									"key": "cost",
+									"value": "120.50",
+									"type": "text",
+									"description": "Part cost"
+								},
+								{
+									"key": "purchaseDate",
+									"value": "2023-12-01",
+									"type": "text",
+									"description": "Purchase date (YYYY-MM-DD)"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Invoice image file (PDF, PNG, JPG, JPEG - max 10MB) - OPTIONAL"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/jobs/{{job_id}}/parts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs", "{{job_id}}", "parts"]
+						},
+						"description": "Create a new part with optional invoice image upload in one request"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Part Invoice (for existing part)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": [],
+									"description": "Invoice image file (PDF, PNG, JPG, JPEG - max 10MB)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/parts/{{part_id}}/upload",
+							"host": ["{{base_url}}"],
+							"path": ["api", "parts", "{{part_id}}", "upload"]
+						},
+						"description": "Upload an invoice image for an existing part"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Part Invoice (Download/Preview)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/parts/{{part_id}}/invoice?download=false",
+							"host": ["{{base_url}}"],
+							"path": ["api", "parts", "{{part_id}}", "invoice"],
+							"query": [
+								{
+									"key": "download",
+									"value": "false",
+									"description": "true to download, false to display inline"
+								}
+							]
+						},
+						"description": "Download or preview the invoice image for a part"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Parts",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/parts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "parts"]
+						},
+						"description": "Retrieve all parts across all jobs"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Parts (Paginated)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/parts/paged?page=0&size=20&sort=purchaseDate,desc",
+							"host": ["{{base_url}}"],
+							"path": ["api", "parts", "paged"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "20"
+								},
+								{
+									"key": "sort",
+									"value": "purchaseDate,desc"
+								}
+							]
+						},
+						"description": "Retrieve paginated list of parts with sorting"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Part by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/parts/{{part_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "parts", "{{part_id}}"]
+						},
+						"description": "Retrieve a specific part by its UUID"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Parts",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/parts/search?name=brake&jobId={{job_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "parts", "search"],
+							"query": [
+								{
+									"key": "name",
+									"value": "brake",
+									"description": "Part name (partial match)"
+								},
+								{
+									"key": "jobId",
+									"value": "{{job_id}}",
+									"description": "Filter parts by job ID"
+								}
+							]
+						},
+						"description": "Search parts by name or filter by job"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Parts by Job ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/jobs/{{job_id}}/parts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "jobs", "{{job_id}}", "parts"]
+						},
+						"description": "Get all parts associated with a specific job"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Part",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Premium Brake Pads\",\n    \"cost\": 150.00,\n    \"invoiceImageUrl\": \"\",\n    \"purchaseDate\": \"2023-11-30\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/parts/{{part_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "parts", "{{part_id}}"]
+						},
+						"description": "Update an existing part with new details"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Part",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/parts/{{part_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "parts", "{{part_id}}"]
+						},
+						"description": "Permanently delete a part from inventory"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Analytics & Reporting",
+			"description": "Financial analytics and business reporting endpoints",
+			"item": [
+				{
+					"name": "Get Monthly Analytics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/analytics/monthly?months=12",
+							"host": ["{{base_url}}"],
+							"path": ["api", "analytics", "monthly"],
+							"query": [
+								{
+									"key": "months",
+									"value": "12",
+									"description": "Number of months to include (default: 12)"
+								}
+							]
+						},
+						"description": "Get monthly analytics for the last N months"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Monthly Analytics (Date Range)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/analytics/monthly?start=2023-01&end=2023-12",
+							"host": ["{{base_url}}"],
+							"path": ["api", "analytics", "monthly"],
+							"query": [
+								{
+									"key": "start",
+									"value": "2023-01",
+									"description": "Start month (YYYY-MM)"
+								},
+								{
+									"key": "end",
+									"value": "2023-12",
+									"description": "End month (YYYY-MM)"
+								}
+							]
+						},
+						"description": "Get monthly analytics for a specific date range"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Month Analytics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/analytics/monthly/2023-12",
+							"host": ["{{base_url}}"],
+							"path": ["api", "analytics", "monthly", "2023-12"]
+						},
+						"description": "Get analytics for a specific month (YYYY-MM format)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Analytics Summary",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/analytics/summary",
+							"host": ["{{base_url}}"],
+							"path": ["api", "analytics", "summary"]
+						},
+						"description": "Get aggregated analytics summary for the last 12 months"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081",
+			"type": "string",
+			"description": "Base URL for the MechTrack API"
+		},
+		{
+			"key": "job_id",
+			"value": "550e8400-e29b-41d4-a716-446655440001",
+			"type": "string",
+			"description": "Sample job UUID for testing"
+		},
+		{
+			"key": "part_id",
+			"value": "650e8400-e29b-41d4-a716-446655440001",
+			"type": "string",
+			"description": "Sample part UUID for testing"
+		}
+	]
+}
