@@ -20,7 +20,8 @@ public class AppSecurityProperties {
 
     /**
      * JWT secret key for token signing. Must be at least 32 characters.
-     * Environment variable: MECHTRACK_JWT_SECRET
+     * Environment variable: MECHTRACK_SECURITY_JWT_SECRET
+     * Property: mechtrack.security.jwt-secret
      */
     @NotBlank(message = "JWT secret is required")
     @Size(min = 32, message = "JWT secret must be at least 32 characters")
@@ -28,20 +29,23 @@ public class AppSecurityProperties {
 
     /**
      * JWT token expiration time in milliseconds (default: 24 hours)
-     * Environment variable: MECHTRACK_JWT_EXPIRATION
+     * Environment variable: MECHTRACK_SECURITY_JWT_EXPIRATION_MS
+     * Property: mechtrack.security.jwt-expiration-ms
      */
     private long jwtExpirationMs = 86400000; // 24 hours
 
     /**
      * Workshop owner's name/username
-     * Environment variable: MECHTRACK_OWNER_NAME
+     * Environment variable: MECHTRACK_SECURITY_OWNER_NAME
+     * Property: mechtrack.security.owner-name
      */
     @NotBlank(message = "Workshop owner name is required")
     private String ownerName;
 
     /**
      * Workshop owner's password (will be hashed)
-     * Environment variable: MECHTRACK_OWNER_PASSWORD
+     * Environment variable: MECHTRACK_SECURITY_OWNER_PASSWORD
+     * Property: mechtrack.security.owner-password
      */
     @NotBlank(message = "Workshop owner password is required")
     @Size(min = 8, message = "Workshop owner password must be at least 8 characters")
@@ -49,13 +53,15 @@ public class AppSecurityProperties {
 
     /**
      * Allowed CORS origins (comma-separated)
-     * Environment variable: MECHTRACK_CORS_ORIGINS
+     * Environment variable: MECHTRACK_SECURITY_CORS_ORIGINS
+     * Property: mechtrack.security.cors-origins
      */
     private String corsOrigins = "http://localhost:3000";
 
     /**
      * Application environment (dev, prod, test)
-     * Environment variable: MECHTRACK_ENVIRONMENT
+     * Environment variable: MECHTRACK_SECURITY_ENVIRONMENT
+     * Property: mechtrack.security.environment
      */
     private String environment = "dev";
 }
