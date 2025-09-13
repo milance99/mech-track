@@ -6,7 +6,7 @@ import com.mechtrack.model.dto.LoginRequest;
 import com.mechtrack.service.AuthenticationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 
 import java.util.Date;
@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class AuthControllerTest extends AbstractMechtrackMvcTest {
 
-    @MockitoBean
+    @MockBean
     private AuthenticationService authenticationService;
 
     @Test
