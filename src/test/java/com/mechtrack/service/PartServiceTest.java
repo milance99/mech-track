@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,13 +32,12 @@ class PartServiceTest extends AbstractMechtrackTest {
         var job = jobService.createJob(createJobRequest());
         var createPartRequest = createPartRequest();
         
-        var part = underTest.addPartToJob(job.getId(), createPartRequest);
-        
+        var part = underTest.addPartToJob(job.getId(), createPartRequest, null);
+
         assertThat(part)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", createPartRequest.getName())
                 .hasFieldOrPropertyWithValue("cost", createPartRequest.getCost())
-                .hasFieldOrPropertyWithValue("invoiceImageUrl", createPartRequest.getInvoiceImageUrl())
                 .hasFieldOrPropertyWithValue("purchaseDate", createPartRequest.getPurchaseDate())
                 .hasFieldOrPropertyWithValue("jobId", job.getId());
         
@@ -49,14 +49,13 @@ class PartServiceTest extends AbstractMechtrackTest {
     void testGet() {
         var job = jobService.createJob(createJobRequest());
         var createPartRequest = createPartRequest();
-        var part = underTest.addPartToJob(job.getId(), createPartRequest);
-        
+        var part = underTest.addPartToJob(job.getId(), createPartRequest, null);
+
         assertThat(underTest.getPartById(part.getId()))
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("id", part.getId())
                 .hasFieldOrPropertyWithValue("name", createPartRequest.getName())
                 .hasFieldOrPropertyWithValue("cost", createPartRequest.getCost())
-                .hasFieldOrPropertyWithValue("invoiceImageUrl", createPartRequest.getInvoiceImageUrl())
                 .hasFieldOrPropertyWithValue("purchaseDate", createPartRequest.getPurchaseDate())
                 .hasFieldOrPropertyWithValue("jobId", job.getId());
     }
@@ -66,8 +65,8 @@ class PartServiceTest extends AbstractMechtrackTest {
     void testUpdate() {
         var job = jobService.createJob(createJobRequest());
         var createPartRequest = createPartRequest();
-        var part = underTest.addPartToJob(job.getId(), createPartRequest);
-        
+        var part = underTest.addPartToJob(job.getId(), createPartRequest, null);
+
         assertThat(part)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", createPartRequest.getName())
@@ -95,8 +94,8 @@ class PartServiceTest extends AbstractMechtrackTest {
     void testDelete() {
         var job = jobService.createJob(createJobRequest());
         var createPartRequest = createPartRequest();
-        var part = underTest.addPartToJob(job.getId(), createPartRequest);
-        
+        var part = underTest.addPartToJob(job.getId(), createPartRequest, null);
+
         underTest.deletePart(part.getId());
         
         assertThatThrownBy(() -> underTest.getPartById(part.getId()))
@@ -108,9 +107,9 @@ class PartServiceTest extends AbstractMechtrackTest {
     @DisplayName("Test get all parts")
     void testGetAll() {
         var job = jobService.createJob(createJobRequest());
-        var part1 = underTest.addPartToJob(job.getId(), createPartRequest("Part 1", new BigDecimal("50.00"), "url1", LocalDate.now()));
-        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()));
-        
+        var part1 = underTest.addPartToJob(job.getId(), createPartRequest(), null);
+        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
+
         List<PartDto> parts = underTest.getAllParts();
         
         assertThat(parts)
@@ -123,9 +122,9 @@ class PartServiceTest extends AbstractMechtrackTest {
     @DisplayName("Test get all parts with pagination")
     void testGetAllPaged() {
         var job = jobService.createJob(createJobRequest());
-        var part1 = underTest.addPartToJob(job.getId(), createPartRequest("Part 1", new BigDecimal("50.00"), "url1", LocalDate.now()));
-        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()));
-        
+        var part1 = underTest.addPartToJob(job.getId(), createPartRequest(), null);
+        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
+
         Page<PartDto> partsPage = underTest.getAllParts(Pageable.unpaged());
         
         assertThat(partsPage)
@@ -140,12 +139,11 @@ class PartServiceTest extends AbstractMechtrackTest {
     @DisplayName("Test get parts by job ID")
     void testGetPartsByJobId() {
         var job1 = jobService.createJob(createJobRequest("Customer 1", "Car 1", "Desc 1", LocalDate.now(), new BigDecimal("100.00")));
-        var job2 = jobService.createJob(createJobRequest("Customer 2", "Car 2", "Desc 2", LocalDate.now(), new BigDecimal("200.00")));
         
-        var part1 = underTest.addPartToJob(job1.getId(), createPartRequest("Part 1", new BigDecimal("50.00"), "url1", LocalDate.now()));
-        var part2 = underTest.addPartToJob(job1.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()));
-        var part3 = underTest.addPartToJob(job2.getId(), createPartRequest("Part 3", new BigDecimal("100.00"), "url3", LocalDate.now()));
-        
+        var part1 = underTest.addPartToJob(job1.getId(), createPartRequest(), null);
+        var part2 = underTest.addPartToJob(job1.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
+
+
         List<PartDto> job1Parts = underTest.getPartsByJobId(job1.getId());
         
         assertThat(job1Parts)
@@ -158,9 +156,9 @@ class PartServiceTest extends AbstractMechtrackTest {
     @DisplayName("Test search parts by name")
     void testSearchByName() {
         var job = jobService.createJob(createJobRequest());
-        var part1 = underTest.addPartToJob(job.getId(), createPartRequest("Brake Pads", new BigDecimal("50.00"), "url1", LocalDate.now()));
-        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Oil Filter", new BigDecimal("25.00"), "url2", LocalDate.now()));
-        
+        var part1 = underTest.addPartToJob(job.getId(), createPartRequest(), null);
+        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Oil Filter", new BigDecimal("25.00"), "url2", LocalDate.now()), null);
+
         List<PartDto> parts = underTest.searchParts("Brake", null);
         
         assertThat(parts)
@@ -173,9 +171,9 @@ class PartServiceTest extends AbstractMechtrackTest {
     @DisplayName("Test search parts with criteria")
     void testSearchWithCriteria() {
         var job = jobService.createJob(createJobRequest("John Smith", "Toyota Camry", "Brake repair", LocalDate.now(), new BigDecimal("200.00")));
-        var part1 = underTest.addPartToJob(job.getId(), createPartRequest("Brake Pads", new BigDecimal("80.00"), "url1", LocalDate.of(2023, 12, 1)));
-        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Oil Filter", new BigDecimal("25.00"), "url2", LocalDate.of(2023, 12, 2)));
-        
+        var part1 = underTest.addPartToJob(job.getId(), createPartRequest(), null);
+        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Oil Filter", new BigDecimal("25.00"), "url2", LocalDate.of(2023, 12, 2)), null);
+
         List<PartDto> parts = underTest.searchParts("Brake", job.getId());
         
         assertThat(parts)
@@ -183,4 +181,30 @@ class PartServiceTest extends AbstractMechtrackTest {
                 .extracting(PartDto::getId)
                 .containsExactly(part1.getId());
     }
-} 
+
+    @Test
+    @DisplayName("Test add part to job with file upload")
+    void testAddPartToJobWithFileUpload() {
+        var job = jobService.createJob(createJobRequest());
+        var createPartRequest = createPartRequest();
+
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "invoice",
+                "test-invoice.pdf",
+                "application/pdf",
+                "Test invoice content".getBytes()
+        );
+
+        var part = underTest.addPartToJob(job.getId(), createPartRequest, mockFile);
+
+        assertThat(part)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("name", createPartRequest.getName())
+                .hasFieldOrPropertyWithValue("cost", createPartRequest.getCost())
+                .hasFieldOrPropertyWithValue("purchaseDate", createPartRequest.getPurchaseDate())
+                .hasFieldOrPropertyWithValue("jobId", job.getId());
+
+        assertThat(part.getInvoiceImageUrl()).isNotNull();
+        assertThat(part.getInvoiceImageUrl()).contains("invoices/");
+    }
+}

@@ -25,7 +25,6 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
     void createAndRetrieveJob() throws Exception {
         var createJobRequest = createJobRequest();
         
-        // Create job
         var result = mvc.perform(
                         post(JOBS_URL)
                                 .accept(MediaType.APPLICATION_JSON)
@@ -39,11 +38,9 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
                 .andExpect(jsonPath("$.income", equalTo(createJobRequest.getIncome().doubleValue())))
                 .andReturn();
 
-        // Extract job ID from response
         var response = result.getResponse().getContentAsString();
         var jobId = objectMapper.readTree(response).get("id").asText();
 
-        // Retrieve the job
         mvc.perform(
                         get(JOBS_URL + "/{id}", jobId)
                                 .accept(MediaType.APPLICATION_JSON))
@@ -57,7 +54,6 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
     @Test
     @DisplayName("Test: search jobs by customer name")
     void searchJobsByCustomerName() throws Exception {
-        // Create test data
         var job = jobService.createJob(createJobRequest("John Smith", "Toyota Camry", "Brake repair", createJobRequest().getDate(), createJobRequest().getIncome()));
 
         mvc.perform(
@@ -74,7 +70,6 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
     @Test
     @DisplayName("Test: update job")
     void updateJob() throws Exception {
-        // Create initial job
         var job = jobService.createJob(createJobRequest());
         var updateRequest = createJobRequest("Updated Customer", "Updated Car", "Updated Description", createJobRequest().getDate(), createJobRequest().getIncome());
 
@@ -93,7 +88,6 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
     @Test
     @DisplayName("Test: delete job")
     void deleteJob() throws Exception {
-        // Create job to delete
         var job = jobService.createJob(createJobRequest());
 
         mvc.perform(
@@ -101,10 +95,9 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
-        // Verify job is deleted by trying to retrieve it
         mvc.perform(
                         get(JOBS_URL + "/{id}", job.getId())
                                 .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound()); // Job not found
+                .andExpect(status().isNotFound());
     }
 } 
