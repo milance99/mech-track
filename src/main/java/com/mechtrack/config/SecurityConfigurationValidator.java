@@ -45,7 +45,8 @@ public class SecurityConfigurationValidator {
             }
 
             log.info("✅ Security configuration validated successfully");
-            log.info("🔑 JWT expiration: {} hours", securityProperties.getJwtExpirationMs() / (1000 * 60 * 60));
+            log.info("🔑 Access token expiration: {} minutes", securityProperties.getAccessTokenExpirationMs() / (1000 * 60));
+            log.info("🔄 Refresh token expiration: {} days", securityProperties.getRefreshTokenExpirationMs() / (1000 * 60 * 60 * 24));
             log.info("👤 Workshop owner: {}", securityProperties.getOwnerName());
             log.info("🌐 CORS origins: {}", securityProperties.getCorsOrigins());
             log.info("🏢 Environment: {}", securityProperties.getEnvironment());

@@ -22,25 +22,30 @@ public class JwtUtils {
 
     public JwtUtils(AppSecurityProperties securityProperties) {
         this.securityProperties = securityProperties;
-        // Create a secure key from the configured secret
         this.key = Keys.hmacShaKeyFor(securityProperties.getJwtSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    /**
-     * Generate JWT token for the workshop owner
-     */
-    public String generateJwtToken(String username) {
+    public String generateAccessToken(String username) {
         return Jwts.builder()
                 .subject(username)
+                .claim("type", "access")
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + securityProperties.getJwtExpirationMs()))
+                .expiration(new Date(System.currentTimeMillis() + securityProperties.getAccessTokenExpirationMs()))
                 .signWith(key)
                 .compact();
     }
 
-    /**
-     * Extract username from JWT token
-     */
+    public String generateRefreshToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .claim("type", "refresh")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + securityProperties.getRefreshTokenExpirationMs()))
+                .signWith(key)
+                .compact();
+    }
+
+
     public String getUsernameFromJwtToken(String token) {
         return Jwts.parser()
                 .verifyWith(key)
@@ -50,9 +55,6 @@ public class JwtUtils {
                 .getSubject();
     }
 
-    /**
-     * Validate JWT token
-     */
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken);
@@ -71,9 +73,25 @@ public class JwtUtils {
         return false;
     }
 
-    /**
-     * Get expiration time from token
-     */
+    public boolean validateRefreshToken(String refreshToken) {
+        try {
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(refreshToken).getPayload();
+            return "refresh".equals(claims.get("type", String.class));
+        } catch (Exception e) {
+            log.error("Invalid refresh token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    public String getTokenType(String token) {
+        try {
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+            return claims.get("type", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public Date getExpirationFromJwtToken(String token) {
         return Jwts.parser()
                 .verifyWith(key)

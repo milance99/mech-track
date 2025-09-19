@@ -3,6 +3,9 @@ package com.mechtrack.service;
 import com.mechtrack.config.AppSecurityProperties;
 import com.mechtrack.exception.AuthenticationException;
 import com.mechtrack.exception.TokenValidationException;
+import com.mechtrack.model.auth.LoginAttempt;
+import com.mechtrack.model.auth.RefreshTokenData;
+import com.mechtrack.model.auth.TokenValidationResult;
 import com.mechtrack.model.dto.JwtResponse;
 import com.mechtrack.model.dto.LoginRequest;
 import com.mechtrack.security.JwtUtils;
@@ -24,6 +27,7 @@ public class AuthenticationService {
     private final AppSecurityProperties securityProperties;
     private final PasswordEncoder passwordEncoder;
     private final ConcurrentHashMap<String, LoginAttempt> attempts = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, RefreshTokenData> refreshTokens = new ConcurrentHashMap<>();
 
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         String ip = "default";
@@ -33,16 +37,53 @@ public class AuthenticationService {
             validateCredentials(loginRequest);
             attempts.remove(ip);
             
-            String jwt = jwtUtils.generateJwtToken(loginRequest.username());
-            Date expirationDate = jwtUtils.getExpirationFromJwtToken(jwt);
+            String accessToken = jwtUtils.generateAccessToken(loginRequest.username());
+            String refreshToken = jwtUtils.generateRefreshToken(loginRequest.username());
+            
+            Date accessTokenExpiration = jwtUtils.getExpirationFromJwtToken(accessToken);
+            Date refreshTokenExpiration = jwtUtils.getExpirationFromJwtToken(refreshToken);
+            
+            storeRefreshToken(refreshToken, loginRequest.username(), refreshTokenExpiration);
+            cleanupExpiredRefreshTokens();
             
             log.info("Authentication successful: {}", loginRequest.username());
-            return new JwtResponse(jwt, loginRequest.username(), expirationDate);
+            return new JwtResponse(accessToken, refreshToken, loginRequest.username(), accessTokenExpiration, refreshTokenExpiration);
             
         } catch (AuthenticationException e) {
             recordFailedAttempt(ip);
             throw e;
         }
+    }
+
+    public JwtResponse refreshAccessToken(String refreshToken) {
+        if (!jwtUtils.validateRefreshToken(refreshToken)) {
+            throw new TokenValidationException("Invalid refresh token");
+        }
+
+        RefreshTokenData tokenData = refreshTokens.get(refreshToken);
+        if (tokenData == null || tokenData.isExpired()) {
+            refreshTokens.remove(refreshToken);
+            throw new TokenValidationException("Refresh token not found or expired");
+        }
+
+        String username = jwtUtils.getUsernameFromJwtToken(refreshToken);
+        String newAccessToken = jwtUtils.generateAccessToken(username);
+        String newRefreshToken = jwtUtils.generateRefreshToken(username);
+        
+        Date accessTokenExpiration = jwtUtils.getExpirationFromJwtToken(newAccessToken);
+        Date refreshTokenExpiration = jwtUtils.getExpirationFromJwtToken(newRefreshToken);
+
+        refreshTokens.remove(refreshToken);
+        storeRefreshToken(newRefreshToken, username, refreshTokenExpiration);
+        cleanupExpiredRefreshTokens();
+
+        log.info("Token refresh successful: {}", username);
+        return new JwtResponse(newAccessToken, newRefreshToken, username, accessTokenExpiration, refreshTokenExpiration);
+    }
+
+    public void revokeRefreshToken(String refreshToken) {
+        refreshTokens.remove(refreshToken);
+        log.info("Refresh token revoked");
     }
 
     public TokenValidationResult validateToken(String authHeader) {
@@ -85,29 +126,12 @@ public class AuthenticationService {
         }
     }
 
-    public static class TokenValidationResult {
-        private final boolean valid;
-        private final String username;
-        private final Date expiresAt;
-
-        public TokenValidationResult(boolean valid, String username, Date expiresAt) {
-            this.valid = valid;
-            this.username = username;
-            this.expiresAt = expiresAt;
-        }
-
-        public boolean isValid() { return valid; }
-        public String getUsername() { return username; }
-        public Date getExpiresAt() { return expiresAt; }
+    private void storeRefreshToken(String refreshToken, String username, Date expiresAt) {
+        refreshTokens.put(refreshToken, new RefreshTokenData(username, expiresAt));
     }
 
-    private static class LoginAttempt {
-        private int failedAttempts = 0;
-        private LocalDateTime lockedUntil;
-
-        void recordFailure() { failedAttempts++; }
-        void lockUntil(LocalDateTime time) { lockedUntil = time; }
-        boolean isLocked() { return lockedUntil != null && LocalDateTime.now().isBefore(lockedUntil); }
-        int getFailedAttempts() { return failedAttempts; }
+    private void cleanupExpiredRefreshTokens() {
+        refreshTokens.entrySet().removeIf(entry -> entry.getValue().isExpired());
     }
+
 }

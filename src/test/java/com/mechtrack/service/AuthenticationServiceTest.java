@@ -26,8 +26,8 @@ class AuthenticationServiceTest extends AbstractMechtrackTest {
 
         assertThat(response).isNotNull();
         assertThat(response.username()).isEqualTo("test_owner");
-        assertThat(response.token()).isNotBlank();
-        assertThat(response.expiresAt()).isNotNull();
+        assertThat(response.accessToken()).isNotBlank();
+        assertThat(response.accessTokenExpiresAt()).isNotNull();
     }
 
     @Test
@@ -56,7 +56,7 @@ class AuthenticationServiceTest extends AbstractMechtrackTest {
         LoginRequest loginRequest = new LoginRequest("test_owner", "password123");
         JwtResponse jwtResponse = authenticationService.authenticateUser(loginRequest);
 
-        String authHeader = "Bearer " + jwtResponse.token();
+        String authHeader = "Bearer " + jwtResponse.accessToken();
         var result = authenticationService.validateToken(authHeader);
 
         assertThat(result.isValid()).isTrue();

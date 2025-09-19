@@ -13,7 +13,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @TestPropertySource(properties = {
     "mechtrack.security.jwt-secret=testSecretKeyThatIsLongEnoughForHS256AlgorithmToWorkProperly123456789",
-    "mechtrack.security.jwt-expiration-ms=3600000"
+    "mechtrack.security.access-token-expiration-ms=900000",
+    "mechtrack.security.refresh-token-expiration-ms=604800000"
 })
 class JwtUtilsTest extends AbstractMechtrackTest {
 
@@ -24,27 +25,45 @@ class JwtUtilsTest extends AbstractMechtrackTest {
     private static final String INVALID_TOKEN = "invalid.token.here";
 
     @Test
-    @DisplayName("Should generate valid JWT token")
-    void shouldGenerateValidJwtToken() {
-        String token = jwtUtils.generateJwtToken(TEST_USERNAME);
+    @DisplayName("Should generate valid access token")
+    void shouldGenerateValidAccessToken() {
+        String token = jwtUtils.generateAccessToken(TEST_USERNAME);
         
         assertThat(token).isNotBlank();
         assertThat(token.split("\\.")).hasSize(3);
     }
 
     @Test
-    @DisplayName("Should extract username from valid token")
-    void shouldExtractUsernameFromValidToken() {
-        String token = jwtUtils.generateJwtToken(TEST_USERNAME);
+    @DisplayName("Should generate valid refresh token")
+    void shouldGenerateValidRefreshToken() {
+        String token = jwtUtils.generateRefreshToken(TEST_USERNAME);
+        
+        assertThat(token).isNotBlank();
+        assertThat(token.split("\\.")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Should extract username from valid access token")
+    void shouldExtractUsernameFromValidAccessToken() {
+        String token = jwtUtils.generateAccessToken(TEST_USERNAME);
         String extractedUsername = jwtUtils.getUsernameFromJwtToken(token);
         
         assertThat(extractedUsername).isEqualTo(TEST_USERNAME);
     }
 
     @Test
-    @DisplayName("Should extract expiration date from valid token")
-    void shouldExtractExpirationDateFromValidToken() {
-        String token = jwtUtils.generateJwtToken(TEST_USERNAME);
+    @DisplayName("Should extract username from valid refresh token")
+    void shouldExtractUsernameFromValidRefreshToken() {
+        String token = jwtUtils.generateRefreshToken(TEST_USERNAME);
+        String extractedUsername = jwtUtils.getUsernameFromJwtToken(token);
+        
+        assertThat(extractedUsername).isEqualTo(TEST_USERNAME);
+    }
+
+    @Test
+    @DisplayName("Should extract expiration date from valid access token")
+    void shouldExtractExpirationDateFromValidAccessToken() {
+        String token = jwtUtils.generateAccessToken(TEST_USERNAME);
         Date expirationDate = jwtUtils.getExpirationFromJwtToken(token);
         
         assertThat(expirationDate).isNotNull();
@@ -52,12 +71,50 @@ class JwtUtilsTest extends AbstractMechtrackTest {
     }
 
     @Test
-    @DisplayName("Should validate valid token")
-    void shouldValidateValidToken() {
-        String token = jwtUtils.generateJwtToken(TEST_USERNAME);
+    @DisplayName("Should extract expiration date from valid refresh token")
+    void shouldExtractExpirationDateFromValidRefreshToken() {
+        String token = jwtUtils.generateRefreshToken(TEST_USERNAME);
+        Date expirationDate = jwtUtils.getExpirationFromJwtToken(token);
+        
+        assertThat(expirationDate).isNotNull();
+        assertThat(expirationDate).isAfter(new Date());
+    }
+
+    @Test
+    @DisplayName("Should validate valid access token")
+    void shouldValidateValidAccessToken() {
+        String token = jwtUtils.generateAccessToken(TEST_USERNAME);
         boolean isValid = jwtUtils.validateJwtToken(token);
         
         assertThat(isValid).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should validate valid refresh token")
+    void shouldValidateValidRefreshToken() {
+        String token = jwtUtils.generateRefreshToken(TEST_USERNAME);
+        boolean isValid = jwtUtils.validateRefreshToken(token);
+        
+        assertThat(isValid).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should reject access token as refresh token")
+    void shouldRejectAccessTokenAsRefreshToken() {
+        String accessToken = jwtUtils.generateAccessToken(TEST_USERNAME);
+        boolean isValid = jwtUtils.validateRefreshToken(accessToken);
+        
+        assertThat(isValid).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should identify token types correctly")
+    void shouldIdentifyTokenTypesCorrectly() {
+        String accessToken = jwtUtils.generateAccessToken(TEST_USERNAME);
+        String refreshToken = jwtUtils.generateRefreshToken(TEST_USERNAME);
+        
+        assertThat(jwtUtils.getTokenType(accessToken)).isEqualTo("access");
+        assertThat(jwtUtils.getTokenType(refreshToken)).isEqualTo("refresh");
     }
 
     @Test
@@ -99,10 +156,21 @@ class JwtUtilsTest extends AbstractMechtrackTest {
     }
 
     @Test
-    @DisplayName("Should generate tokens with different usernames")
-    void shouldGenerateTokensWithDifferentUsernames() {
-        String token1 = jwtUtils.generateJwtToken("user1");
-        String token2 = jwtUtils.generateJwtToken("user2");
+    @DisplayName("Should generate different access tokens for different usernames")
+    void shouldGenerateDifferentAccessTokensForDifferentUsernames() {
+        String token1 = jwtUtils.generateAccessToken("user1");
+        String token2 = jwtUtils.generateAccessToken("user2");
+        
+        assertThat(token1).isNotEqualTo(token2);
+        assertThat(jwtUtils.getUsernameFromJwtToken(token1)).isEqualTo("user1");
+        assertThat(jwtUtils.getUsernameFromJwtToken(token2)).isEqualTo("user2");
+    }
+
+    @Test
+    @DisplayName("Should generate different refresh tokens for different usernames")
+    void shouldGenerateDifferentRefreshTokensForDifferentUsernames() {
+        String token1 = jwtUtils.generateRefreshToken("user1");
+        String token2 = jwtUtils.generateRefreshToken("user2");
         
         assertThat(token1).isNotEqualTo(token2);
         assertThat(jwtUtils.getUsernameFromJwtToken(token1)).isEqualTo("user1");

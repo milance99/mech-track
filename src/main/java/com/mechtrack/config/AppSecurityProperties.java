@@ -28,11 +28,19 @@ public class AppSecurityProperties {
     private String jwtSecret;
 
     /**
-     * JWT token expiration time in milliseconds (default: 24 hours)
-     * Environment variable: MECHTRACK_SECURITY_JWT_EXPIRATION_MS
-     * Property: mechtrack.security.jwt-expiration-ms
+     * Access token expiration time in milliseconds (default: 15 minutes)
+     * Environment variable: MECHTRACK_SECURITY_ACCESS_TOKEN_EXPIRATION_MS
+     * Property: mechtrack.security.access-token-expiration-ms
      */
-    private long jwtExpirationMs = 86400000; // 24 hours
+    private long accessTokenExpirationMs = 900000; // 15 minutes
+
+    /**
+     * Refresh token expiration time in milliseconds (default: 7 days)
+     * Environment variable: MECHTRACK_SECURITY_REFRESH_TOKEN_EXPIRATION_MS
+     * Property: mechtrack.security.refresh-token-expiration-ms
+     */
+    private long refreshTokenExpirationMs = 604800000; // 7 days
+
 
     /**
      * Workshop owner's name/username

@@ -31,7 +31,4 @@ build/
 
 ### VS Code ###
 .vscode/
-
-### New relic ###
-/newrelic/**
-!/newrelic/newrelic.yml
+.cursor/

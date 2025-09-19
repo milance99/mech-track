@@ -1,6 +1,7 @@
 package com.mechtrack.controller;
 
 import com.mechtrack.AbstractMechtrackMvcTest;
+import com.mechtrack.model.auth.TokenValidationResult;
 import com.mechtrack.model.dto.JwtResponse;
 import com.mechtrack.model.dto.LoginRequest;
 import com.mechtrack.service.AuthenticationService;
@@ -27,7 +28,9 @@ class AuthControllerTest extends AbstractMechtrackMvcTest {
     @DisplayName("Should login with valid credentials")
     void shouldLoginWithValidCredentials() throws Exception {
         LoginRequest loginRequest = new LoginRequest("test_owner", "password123");
-        JwtResponse jwtResponse = new JwtResponse("jwt_token_here", "test_owner", new Date());
+        Date now = new Date();
+        Date later = new Date(now.getTime() + 604800000); // 7 days later
+        JwtResponse jwtResponse = new JwtResponse("access_token_here", "refresh_token_here", "test_owner", now, later);
         
         when(authenticationService.authenticateUser(any(LoginRequest.class)))
                 .thenReturn(jwtResponse);
@@ -37,9 +40,11 @@ class AuthControllerTest extends AbstractMechtrackMvcTest {
                         .content(asJsonString(loginRequest)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt_token_here"))
+                .andExpect(jsonPath("$.accessToken").value("access_token_here"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh_token_here"))
                 .andExpect(jsonPath("$.username").value("test_owner"))
-                .andExpect(jsonPath("$.expiresAt").exists());
+                .andExpect(jsonPath("$.accessTokenExpiresAt").exists())
+                .andExpect(jsonPath("$.refreshTokenExpiresAt").exists());
     }
 
     @Test
@@ -48,8 +53,8 @@ class AuthControllerTest extends AbstractMechtrackMvcTest {
         String authHeader = "Bearer valid_token";
         
         // Create a proper TokenValidationResult mock
-        AuthenticationService.TokenValidationResult validResult =
-            new AuthenticationService.TokenValidationResult(true, "test_owner", new Date());
+        TokenValidationResult validResult =
+            new TokenValidationResult(true, "test_owner", new Date());
 
         when(authenticationService.validateToken(anyString()))
                 .thenReturn(validResult);
