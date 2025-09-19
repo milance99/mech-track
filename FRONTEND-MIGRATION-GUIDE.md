@@ -1,3 +1,4 @@
+#TODO REMOVE
 # 🔐 MechTrack Authentication System Update - Frontend Migration Guide
 
 ## 📋 **What We Changed on the Backend**
