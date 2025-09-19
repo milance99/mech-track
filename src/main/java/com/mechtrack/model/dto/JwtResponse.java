@@ -1,5 +1,6 @@
 package com.mechtrack.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
@@ -18,10 +19,12 @@ public record JwtResponse(
     @Schema(description = "Workshop owner name", example = "mike_johnson")
     String username,
 
-    @Schema(description = "Access token expiration time")
+    @Schema(description = "Access token expiration time", example = "2025-09-19T12:15:00")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     Date accessTokenExpiresAt,
 
-    @Schema(description = "Refresh token expiration time")
+    @Schema(description = "Refresh token expiration time", example = "2025-09-26T12:00:00")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     Date refreshTokenExpiresAt
 ) {
     public JwtResponse(String accessToken, String refreshToken, String username, Date accessTokenExpiresAt, Date refreshTokenExpiresAt) {
