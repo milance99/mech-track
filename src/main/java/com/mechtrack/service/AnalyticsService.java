@@ -1,8 +1,10 @@
 package com.mechtrack.service;
 
+import com.mechtrack.model.dto.DailyAnalyticsDto;
 import com.mechtrack.model.dto.MonthlyAnalyticsDto;
 import com.mechtrack.model.entity.Job;
 import com.mechtrack.model.entity.Part;
+import com.mechtrack.model.enums.TimeInterval;
 import com.mechtrack.repository.JobRepository;
 import com.mechtrack.repository.PartRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -81,7 +84,7 @@ public class AnalyticsService {
      */
     public MonthlyAnalyticsDto getMonthlyAnalytics(YearMonth month) {
         List<MonthlyAnalyticsDto> analytics = getMonthlyAnalytics(month, month);
-        return analytics.isEmpty() ? createEmptyAnalytics(month) : analytics.get(0);
+        return analytics.isEmpty() ? createEmptyAnalytics(month) : analytics.getFirst();
     }
 
     private List<MonthlyAnalyticsDto> generateMonthlyAnalytics(
@@ -112,12 +115,12 @@ public class AnalyticsService {
         // Calculate totals
         BigDecimal totalIncome = monthJobs.stream()
                 .map(Job::getIncome)
-                .filter(income -> income != null)
+                .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal totalExpenses = monthParts.stream()
                 .map(Part::getCost)
-                .filter(cost -> cost != null)
+                .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         BigDecimal netProfit = totalIncome.subtract(totalExpenses);
@@ -136,6 +139,112 @@ public class AnalyticsService {
     private MonthlyAnalyticsDto createEmptyAnalytics(YearMonth month) {
         return new MonthlyAnalyticsDto(
                 month,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                0,
+                0
+        );
+    }
+
+    /**
+     * Get daily analytics for a specific time interval
+     * @param interval The time interval (7d, 1m, 3m)
+     * @return List of daily analytics sorted by date
+     */
+    public List<DailyAnalyticsDto> getDailyAnalytics(TimeInterval interval) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(interval.getDays() - 1);
+        
+        return getDailyAnalytics(startDate, endDate);
+    }
+
+    /**
+     * Get daily analytics for a specific date range
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @return List of daily analytics sorted by date
+     */
+    public List<DailyAnalyticsDto> getDailyAnalytics(LocalDate startDate, LocalDate endDate) {
+        log.info("Calculating daily analytics from {} to {}", startDate, endDate);
+        
+        // Fetch all jobs and parts in the date range
+        List<Job> jobs = jobRepository.findByDateBetween(startDate, endDate);
+        List<Part> parts = partRepository.findByPurchaseDateBetween(startDate, endDate);
+        
+        // Group jobs by date
+        Map<LocalDate, List<Job>> jobsByDate = jobs.stream()
+                .collect(Collectors.groupingBy(Job::getDate));
+        
+        // Group parts by date
+        Map<LocalDate, List<Part>> partsByDate = parts.stream()
+                .collect(Collectors.groupingBy(Part::getPurchaseDate));
+        
+        // Generate analytics for each day in the range
+        return generateDailyAnalytics(startDate, endDate, jobsByDate, partsByDate);
+    }
+
+    /**
+     * Get analytics for a specific date
+     * @param date The specific date
+     * @return Daily analytics for that date
+     */
+    public DailyAnalyticsDto getDailyAnalytics(LocalDate date) {
+        List<DailyAnalyticsDto> analytics = getDailyAnalytics(date, date);
+        return analytics.isEmpty() ? createEmptyDailyAnalytics(date) : analytics.getFirst();
+    }
+
+    private List<DailyAnalyticsDto> generateDailyAnalytics(
+            LocalDate startDate, 
+            LocalDate endDate,
+            Map<LocalDate, List<Job>> jobsByDate,
+            Map<LocalDate, List<Part>> partsByDate) {
+        
+        List<DailyAnalyticsDto> result = new java.util.ArrayList<>();
+        LocalDate current = startDate;
+        
+        while (!current.isAfter(endDate)) {
+            result.add(calculateDailyAnalytics(current, jobsByDate, partsByDate));
+            current = current.plusDays(1);
+        }
+        
+        return result;
+    }
+
+    private DailyAnalyticsDto calculateDailyAnalytics(
+            LocalDate date,
+            Map<LocalDate, List<Job>> jobsByDate,
+            Map<LocalDate, List<Part>> partsByDate) {
+        
+        List<Job> dayJobs = jobsByDate.getOrDefault(date, List.of());
+        List<Part> dayParts = partsByDate.getOrDefault(date, List.of());
+        
+        // Calculate totals
+        BigDecimal totalIncome = dayJobs.stream()
+                .map(Job::getIncome)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal totalExpenses = dayParts.stream()
+                .map(Part::getCost)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal netProfit = totalIncome.subtract(totalExpenses);
+        
+        return new DailyAnalyticsDto(
+                date,
+                totalIncome,
+                totalExpenses,
+                netProfit,
+                dayJobs.size(),
+                dayParts.size()
+        );
+    }
+
+    private DailyAnalyticsDto createEmptyDailyAnalytics(LocalDate date) {
+        return new DailyAnalyticsDto(
+                date,
                 BigDecimal.ZERO,
                 BigDecimal.ZERO,
                 BigDecimal.ZERO,

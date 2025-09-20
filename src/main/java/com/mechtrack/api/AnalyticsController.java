@@ -1,6 +1,8 @@
 package com.mechtrack.api;
 
+import com.mechtrack.model.dto.DailyAnalyticsDto;
 import com.mechtrack.model.dto.MonthlyAnalyticsDto;
+import com.mechtrack.model.enums.TimeInterval;
 import com.mechtrack.service.AnalyticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +17,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -144,5 +147,126 @@ public class AnalyticsController {
                 });
         
         return ResponseEntity.ok(summary);
+    }
+
+    @GetMapping("/daily")
+    @Operation(
+        summary = "Get daily analytics",
+        description = "Retrieves daily financial analytics including income, expenses, and profit for a specified time interval. " +
+                     "Returns day-by-day data that can be used for charts and graphs with ups and downs."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Daily analytics retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = DailyAnalyticsDto.class),
+                examples = @ExampleObject(
+                    name = "Daily Analytics Response",
+                    value = """
+                    [
+                        {
+                            "date": "2025-09-14",
+                            "totalIncome": 450.00,
+                            "totalExpenses": 120.00,
+                            "netProfit": 330.00,
+                            "jobCount": 2,
+                            "partCount": 3
+                        },
+                        {
+                            "date": "2025-09-15",
+                            "totalIncome": 0.00,
+                            "totalExpenses": 85.50,
+                            "netProfit": -85.50,
+                            "jobCount": 0,
+                            "partCount": 2
+                        },
+                        {
+                            "date": "2025-09-16",
+                            "totalIncome": 750.00,
+                            "totalExpenses": 200.00,
+                            "netProfit": 550.00,
+                            "jobCount": 3,
+                            "partCount": 5
+                        }
+                    ]
+                    """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400", 
+            description = "Invalid time interval parameter",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(
+                    name = "Invalid Interval Error",
+                    value = """
+                    {
+                        "timestamp": "2025-09-20T12:00:00",
+                        "status": 400,
+                        "error": "Bad Request",
+                        "message": "Invalid time interval code: 6m. Valid codes are: 7d, 1m, 3m"
+                    }
+                    """
+                )
+            )
+        )
+    })
+    public ResponseEntity<List<DailyAnalyticsDto>> getDailyAnalytics(
+        @Parameter(
+            description = "Time interval for analytics data. Valid values: 7d (last 7 days), 1m (last 30 days), 3m (last 90 days)",
+            example = "7d",
+            schema = @Schema(allowableValues = {"7d", "1m", "3m"})
+        )
+        @RequestParam(value = "interval", defaultValue = "7d") 
+        String intervalCode,
+        
+        @Parameter(description = "Start date in YYYY-MM-DD format (optional, overrides interval)", example = "2025-09-01")
+        @RequestParam(value = "start", required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) 
+        LocalDate start,
+        
+        @Parameter(description = "End date in YYYY-MM-DD format (optional, overrides interval)", example = "2025-09-20")
+        @RequestParam(value = "end", required = false) 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) 
+        LocalDate end) {
+        
+        List<DailyAnalyticsDto> analytics;
+        
+        if (start != null && end != null) {
+            // Use custom date range if both start and end are provided
+            analytics = analyticsService.getDailyAnalytics(start, end);
+        } else {
+            // Use predefined interval
+            TimeInterval interval = TimeInterval.fromCode(intervalCode);
+            analytics = analyticsService.getDailyAnalytics(interval);
+        }
+        
+        return ResponseEntity.ok(analytics);
+    }
+
+    @GetMapping("/daily/{date}")
+    @Operation(
+        summary = "Get daily analytics for specific date",
+        description = "Retrieves daily financial analytics for a specific date"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200", 
+            description = "Daily analytics for specific date retrieved successfully",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = DailyAnalyticsDto.class)
+            )
+        )
+    })
+    public ResponseEntity<DailyAnalyticsDto> getDailyAnalytics(
+        @Parameter(description = "Date in YYYY-MM-DD format", example = "2025-09-20")
+        @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        
+        DailyAnalyticsDto analytics = analyticsService.getDailyAnalytics(date);
+        return ResponseEntity.ok(analytics);
     }
 } 

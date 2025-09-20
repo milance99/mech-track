@@ -185,6 +185,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, Object> response = createErrorResponse(
+            HttpStatus.BAD_REQUEST, 
+            "Bad Request", 
+            ex.getMessage()
+        );
+        
+        log.warn("Invalid argument: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(response);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
         Map<String, Object> response = createErrorResponse(
