@@ -15,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -40,8 +39,8 @@ public class AuthenticationService {
             String accessToken = jwtUtils.generateAccessToken(loginRequest.username());
             String refreshToken = jwtUtils.generateRefreshToken(loginRequest.username());
             
-            Date accessTokenExpiration = jwtUtils.getExpirationFromJwtToken(accessToken);
-            Date refreshTokenExpiration = jwtUtils.getExpirationFromJwtToken(refreshToken);
+            LocalDateTime accessTokenExpiration = jwtUtils.getExpirationAsLocalDateTimeFromJwtToken(accessToken);
+            LocalDateTime refreshTokenExpiration = jwtUtils.getExpirationAsLocalDateTimeFromJwtToken(refreshToken);
             
             storeRefreshToken(refreshToken, loginRequest.username(), refreshTokenExpiration);
             cleanupExpiredRefreshTokens();
@@ -70,8 +69,8 @@ public class AuthenticationService {
         String newAccessToken = jwtUtils.generateAccessToken(username);
         String newRefreshToken = jwtUtils.generateRefreshToken(username);
         
-        Date accessTokenExpiration = jwtUtils.getExpirationFromJwtToken(newAccessToken);
-        Date refreshTokenExpiration = jwtUtils.getExpirationFromJwtToken(newRefreshToken);
+        LocalDateTime accessTokenExpiration = jwtUtils.getExpirationAsLocalDateTimeFromJwtToken(newAccessToken);
+        LocalDateTime refreshTokenExpiration = jwtUtils.getExpirationAsLocalDateTimeFromJwtToken(newRefreshToken);
 
         refreshTokens.remove(refreshToken);
         storeRefreshToken(newRefreshToken, username, refreshTokenExpiration);
@@ -97,7 +96,7 @@ public class AuthenticationService {
         }
 
         String username = jwtUtils.getUsernameFromJwtToken(token);
-        Date expiresAt = jwtUtils.getExpirationFromJwtToken(token);
+        LocalDateTime expiresAt = jwtUtils.getExpirationAsLocalDateTimeFromJwtToken(token);
         return new TokenValidationResult(true, username, expiresAt);
     }
 
@@ -126,7 +125,7 @@ public class AuthenticationService {
         }
     }
 
-    private void storeRefreshToken(String refreshToken, String username, Date expiresAt) {
+    private void storeRefreshToken(String refreshToken, String username, LocalDateTime expiresAt) {
         refreshTokens.put(refreshToken, new RefreshTokenData(username, expiresAt));
     }
 

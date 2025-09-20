@@ -1,11 +1,11 @@
 package com.mechtrack.model.auth;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 public record TokenValidationResult(
     boolean valid,
     String username,
-    Date expiresAt
+    LocalDateTime expiresAt
 ) {
     
     public boolean isValid() {
@@ -16,7 +16,7 @@ public record TokenValidationResult(
         return username;
     }
     
-    public Date getExpiresAt() {
+    public LocalDateTime getExpiresAt() {
         return expiresAt;
     }
 }

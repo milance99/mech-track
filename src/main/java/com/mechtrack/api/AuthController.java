@@ -48,8 +48,8 @@ public class AuthController {
                         "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                         "type": "Bearer",
                         "username": "mike_johnson",
-                        "accessTokenExpiresAt": "2024-01-01T12:15:00",
-                        "refreshTokenExpiresAt": "2024-01-08T12:00:00"
+                        "accessTokenExpiresAt": "2025-09-20T12:15:00",
+                        "refreshTokenExpiresAt": "2025-09-27T12:00:00"
                     }
                     """
                 )
@@ -137,8 +137,8 @@ public class AuthController {
                         "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                         "type": "Bearer",
                         "username": "mike_johnson",
-                        "accessTokenExpiresAt": "2024-01-01T12:15:00",
-                        "refreshTokenExpiresAt": "2024-01-08T12:00:00"
+                        "accessTokenExpiresAt": "2025-09-20T12:15:00",
+                        "refreshTokenExpiresAt": "2025-09-27T12:00:00"
                     }
                     """
                 )

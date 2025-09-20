@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -28,8 +28,8 @@ class AuthControllerTest extends AbstractMechtrackMvcTest {
     @DisplayName("Should login with valid credentials")
     void shouldLoginWithValidCredentials() throws Exception {
         LoginRequest loginRequest = new LoginRequest("test_owner", "password123");
-        Date now = new Date();
-        Date later = new Date(now.getTime() + 604800000); // 7 days later
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime later = now.plusDays(7); // 7 days later
         JwtResponse jwtResponse = new JwtResponse("access_token_here", "refresh_token_here", "test_owner", now, later);
         
         when(authenticationService.authenticateUser(any(LoginRequest.class)))
@@ -54,7 +54,7 @@ class AuthControllerTest extends AbstractMechtrackMvcTest {
         
         // Create a proper TokenValidationResult mock
         TokenValidationResult validResult =
-            new TokenValidationResult(true, "test_owner", new Date());
+            new TokenValidationResult(true, "test_owner", LocalDateTime.now());
 
         when(authenticationService.validateToken(anyString()))
                 .thenReturn(validResult);
