@@ -105,8 +105,12 @@ public class JwtUtils {
 
     public LocalDateTime getExpirationAsLocalDateTimeFromJwtToken(String token) {
         Date expiration = getExpirationFromJwtToken(token);
+        // Use configured timezone or fall back to system default
+        String timezoneProp = System.getProperty("user.timezone", System.getenv("TZ"));
+        ZoneId zoneId = (timezoneProp != null) ? ZoneId.of(timezoneProp) : ZoneId.systemDefault();
+        
         return expiration.toInstant()
-                .atZone(ZoneId.systemDefault())
+                .atZone(zoneId)
                 .toLocalDateTime();
     }
 }

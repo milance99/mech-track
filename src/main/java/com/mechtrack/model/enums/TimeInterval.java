@@ -54,3 +54,4 @@ public enum TimeInterval {
         return code;
     }
 }
+

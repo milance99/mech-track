@@ -32,3 +32,4 @@ public class DailyAnalyticsDto {
     @Schema(description = "Number of parts purchased on this day", example = "5")
     private Integer partCount;
 }
+

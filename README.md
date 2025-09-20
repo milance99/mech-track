@@ -16,6 +16,9 @@ MECHTRACK_SECURITY_CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
 MECHTRACK_SECURITY_ACCESS_TOKEN_EXPIRATION_MS=900000    # 15 minutes
 MECHTRACK_SECURITY_REFRESH_TOKEN_EXPIRATION_MS=604800000 # 7 days
 
+# Timezone Configuration (Optional - defaults to Europe/Belgrade)
+TZ=Europe/Belgrade                                       # Your timezone with automatic DST handling
+
 # Database
 DATABASE_URL=jdbc:postgresql://host:5432/dbname
 ```
