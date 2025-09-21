@@ -60,8 +60,8 @@ class AuthenticationServiceTest extends AbstractMechtrackTest {
         var result = authenticationService.validateToken(authHeader);
 
         assertThat(result.isValid()).isTrue();
-        assertThat(result.getUsername()).isEqualTo("test_owner");
-        assertThat(result.getExpiresAt()).isNotNull();
+        assertThat(result.username()).isEqualTo("test_owner");
+        assertThat(result.expiresAt()).isNotNull();
     }
 
     @Test

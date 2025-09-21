@@ -32,16 +32,16 @@ class PartServiceTest extends AbstractMechtrackTest {
         var job = jobService.createJob(createJobRequest());
         var createPartRequest = createPartRequest();
         
-        var part = underTest.addPartToJob(job.getId(), createPartRequest, null);
+        var part = underTest.addPartToJob(job.id(), createPartRequest, null);
 
         assertThat(part)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", createPartRequest.getName())
                 .hasFieldOrPropertyWithValue("cost", createPartRequest.getCost())
                 .hasFieldOrPropertyWithValue("purchaseDate", createPartRequest.getPurchaseDate())
-                .hasFieldOrPropertyWithValue("jobId", job.getId());
+                .hasFieldOrPropertyWithValue("jobId", job.id());
         
-        assertThat(part.getId()).isNotNull();
+        assertThat(part.id()).isNotNull();
     }
 
     @Test
@@ -49,15 +49,15 @@ class PartServiceTest extends AbstractMechtrackTest {
     void testGet() {
         var job = jobService.createJob(createJobRequest());
         var createPartRequest = createPartRequest();
-        var part = underTest.addPartToJob(job.getId(), createPartRequest, null);
+        var part = underTest.addPartToJob(job.id(), createPartRequest, null);
 
-        assertThat(underTest.getPartById(part.getId()))
+        assertThat(underTest.getPartById(part.id()))
                 .isNotNull()
-                .hasFieldOrPropertyWithValue("id", part.getId())
+                .hasFieldOrPropertyWithValue("id", part.id())
                 .hasFieldOrPropertyWithValue("name", createPartRequest.getName())
                 .hasFieldOrPropertyWithValue("cost", createPartRequest.getCost())
                 .hasFieldOrPropertyWithValue("purchaseDate", createPartRequest.getPurchaseDate())
-                .hasFieldOrPropertyWithValue("jobId", job.getId());
+                .hasFieldOrPropertyWithValue("jobId", job.id());
     }
 
     @Test
@@ -65,7 +65,7 @@ class PartServiceTest extends AbstractMechtrackTest {
     void testUpdate() {
         var job = jobService.createJob(createJobRequest());
         var createPartRequest = createPartRequest();
-        var part = underTest.addPartToJob(job.getId(), createPartRequest, null);
+        var part = underTest.addPartToJob(job.id(), createPartRequest, null);
 
         assertThat(part)
                 .isNotNull()
@@ -79,14 +79,14 @@ class PartServiceTest extends AbstractMechtrackTest {
                 LocalDate.of(2023, 12, 1)
         );
         
-        assertThat(underTest.updatePart(part.getId(), updatePartRequest))
+        assertThat(underTest.updatePart(part.id(), updatePartRequest))
                 .isNotNull()
-                .hasFieldOrPropertyWithValue("id", part.getId())
+                .hasFieldOrPropertyWithValue("id", part.id())
                 .hasFieldOrPropertyWithValue("name", updatePartRequest.getName())
                 .hasFieldOrPropertyWithValue("cost", updatePartRequest.getCost())
                 .hasFieldOrPropertyWithValue("invoiceImageUrl", updatePartRequest.getInvoiceImageUrl())
                 .hasFieldOrPropertyWithValue("purchaseDate", updatePartRequest.getPurchaseDate())
-                .hasFieldOrPropertyWithValue("jobId", job.getId());
+                .hasFieldOrPropertyWithValue("jobId", job.id());
     }
 
     @Test
@@ -94,11 +94,11 @@ class PartServiceTest extends AbstractMechtrackTest {
     void testDelete() {
         var job = jobService.createJob(createJobRequest());
         var createPartRequest = createPartRequest();
-        var part = underTest.addPartToJob(job.getId(), createPartRequest, null);
+        var part = underTest.addPartToJob(job.id(), createPartRequest, null);
 
-        underTest.deletePart(part.getId());
+        underTest.deletePart(part.id());
         
-        assertThatThrownBy(() -> underTest.getPartById(part.getId()))
+        assertThatThrownBy(() -> underTest.getPartById(part.id()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Part not found");
     }
@@ -107,23 +107,23 @@ class PartServiceTest extends AbstractMechtrackTest {
     @DisplayName("Test get all parts")
     void testGetAll() {
         var job = jobService.createJob(createJobRequest());
-        var part1 = underTest.addPartToJob(job.getId(), createPartRequest(), null);
-        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
+        var part1 = underTest.addPartToJob(job.id(), createPartRequest(), null);
+        var part2 = underTest.addPartToJob(job.id(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
 
         List<PartDto> parts = underTest.getAllParts();
         
         assertThat(parts)
                 .hasSize(2)
-                .extracting(PartDto::getId)
-                .containsExactlyInAnyOrder(part1.getId(), part2.getId());
+                .extracting(PartDto::id)
+                .containsExactlyInAnyOrder(part1.id(), part2.id());
     }
 
     @Test
     @DisplayName("Test get all parts with pagination")
     void testGetAllPaged() {
         var job = jobService.createJob(createJobRequest());
-        var part1 = underTest.addPartToJob(job.getId(), createPartRequest(), null);
-        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
+        var part1 = underTest.addPartToJob(job.id(), createPartRequest(), null);
+        var part2 = underTest.addPartToJob(job.id(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
 
         Page<PartDto> partsPage = underTest.getAllParts(Pageable.unpaged());
         
@@ -131,8 +131,8 @@ class PartServiceTest extends AbstractMechtrackTest {
                 .isNotNull();
         assertThat(partsPage.getContent())
                 .hasSize(2)
-                .extracting(PartDto::getId)
-                .containsExactlyInAnyOrder(part1.getId(), part2.getId());
+                .extracting(PartDto::id)
+                .containsExactlyInAnyOrder(part1.id(), part2.id());
     }
 
     @Test
@@ -140,46 +140,46 @@ class PartServiceTest extends AbstractMechtrackTest {
     void testGetPartsByJobId() {
         var job1 = jobService.createJob(createJobRequest("Customer 1", "Car 1", "Desc 1", LocalDate.now(), new BigDecimal("100.00")));
         
-        var part1 = underTest.addPartToJob(job1.getId(), createPartRequest(), null);
-        var part2 = underTest.addPartToJob(job1.getId(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
+        var part1 = underTest.addPartToJob(job1.id(), createPartRequest(), null);
+        var part2 = underTest.addPartToJob(job1.id(), createPartRequest("Part 2", new BigDecimal("75.00"), "url2", LocalDate.now()), null);
 
 
-        List<PartDto> job1Parts = underTest.getPartsByJobId(job1.getId());
+        List<PartDto> job1Parts = underTest.getPartsByJobId(job1.id());
         
         assertThat(job1Parts)
                 .hasSize(2)
-                .extracting(PartDto::getId)
-                .containsExactlyInAnyOrder(part1.getId(), part2.getId());
+                .extracting(PartDto::id)
+                .containsExactlyInAnyOrder(part1.id(), part2.id());
     }
 
     @Test
     @DisplayName("Test search parts by name")
     void testSearchByName() {
         var job = jobService.createJob(createJobRequest());
-        var part1 = underTest.addPartToJob(job.getId(), createPartRequest(), null);
-        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Oil Filter", new BigDecimal("25.00"), "url2", LocalDate.now()), null);
+        var part1 = underTest.addPartToJob(job.id(), createPartRequest(), null);
+        underTest.addPartToJob(job.id(), createPartRequest("Oil Filter", new BigDecimal("25.00"), "url2", LocalDate.now()), null);
 
         List<PartDto> parts = underTest.searchParts("Brake", null);
         
         assertThat(parts)
                 .hasSize(1)
-                .extracting(PartDto::getId)
-                .containsExactly(part1.getId());
+                .extracting(PartDto::id)
+                .containsExactly(part1.id());
     }
 
     @Test
     @DisplayName("Test search parts with criteria")
     void testSearchWithCriteria() {
         var job = jobService.createJob(createJobRequest("John Smith", "Toyota Camry", "Brake repair", LocalDate.now(), new BigDecimal("200.00")));
-        var part1 = underTest.addPartToJob(job.getId(), createPartRequest(), null);
-        var part2 = underTest.addPartToJob(job.getId(), createPartRequest("Oil Filter", new BigDecimal("25.00"), "url2", LocalDate.of(2023, 12, 2)), null);
+        var part1 = underTest.addPartToJob(job.id(), createPartRequest(), null);
+        underTest.addPartToJob(job.id(), createPartRequest("Oil Filter", new BigDecimal("25.00"), "url2", LocalDate.of(2023, 12, 2)), null);
 
-        List<PartDto> parts = underTest.searchParts("Brake", job.getId());
+        List<PartDto> parts = underTest.searchParts("Brake", job.id());
         
         assertThat(parts)
                 .hasSize(1)
-                .extracting(PartDto::getId)
-                .containsExactly(part1.getId());
+                .extracting(PartDto::id)
+                .containsExactly(part1.id());
     }
 
     @Test
@@ -195,16 +195,16 @@ class PartServiceTest extends AbstractMechtrackTest {
                 "Test invoice content".getBytes()
         );
 
-        var part = underTest.addPartToJob(job.getId(), createPartRequest, mockFile);
+        var part = underTest.addPartToJob(job.id(), createPartRequest, mockFile);
 
         assertThat(part)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("name", createPartRequest.getName())
                 .hasFieldOrPropertyWithValue("cost", createPartRequest.getCost())
                 .hasFieldOrPropertyWithValue("purchaseDate", createPartRequest.getPurchaseDate())
-                .hasFieldOrPropertyWithValue("jobId", job.getId());
+                .hasFieldOrPropertyWithValue("jobId", job.id());
 
-        assertThat(part.getInvoiceImageUrl()).isNotNull();
-        assertThat(part.getInvoiceImageUrl()).contains("invoices/");
+        assertThat(part.invoiceImageUrl()).isNotNull();
+        assertThat(part.invoiceImageUrl()).contains("invoices/");
     }
 }

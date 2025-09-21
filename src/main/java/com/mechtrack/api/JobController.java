@@ -2,6 +2,9 @@ package com.mechtrack.api;
 
 import com.mechtrack.model.dto.CreateJobRequest;
 import com.mechtrack.model.dto.JobDto;
+import com.mechtrack.model.dto.JobSearchCriteria;
+import com.mechtrack.model.enums.JobStatus;
+import com.mechtrack.model.enums.JobType;
 import com.mechtrack.service.JobService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -148,33 +151,60 @@ public class JobController {
 
     @GetMapping("/search")
     @Operation(
-        summary = "Search jobs",
-        description = "Search jobs by customer name, car model, or date range. All parameters are optional."
+        summary = "Search jobs with comprehensive filters",
+        description = "Search jobs by any combination of customer name, car model, description, date range, income range, status, type, and part information. All parameters are optional and can be combined for powerful filtering."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Search completed successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid search parameters")
     })
     public ResponseEntity<List<JobDto>> searchJobs(
-        @Parameter(description = "Customer name (partial match)", example = "John")
-        @RequestParam(required = false) String customer,
+        @Parameter(description = "Customer name (partial match, case-insensitive)", example = "John")
+        @RequestParam(required = false) String customerName,
         
-        @Parameter(description = "Car model (partial match)", example = "Toyota")
-        @RequestParam(required = false) String car,
+        @Parameter(description = "Car model (partial match, case-insensitive)", example = "Toyota")
+        @RequestParam(required = false) String carModel,
+        
+        @Parameter(description = "Job description (partial match, case-insensitive)", example = "brake")
+        @RequestParam(required = false) String description,
         
         @Parameter(description = "Start date (YYYY-MM-DD)", example = "2023-01-01")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
         
         @Parameter(description = "End date (YYYY-MM-DD)", example = "2023-12-31")
-        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
         
         @Parameter(description = "Minimum income", example = "100.00")
         @RequestParam(required = false) BigDecimal minIncome,
         
         @Parameter(description = "Maximum income", example = "1000.00")
-        @RequestParam(required = false) BigDecimal maxIncome) {
+        @RequestParam(required = false) BigDecimal maxIncome,
         
-        List<JobDto> jobs = jobService.searchJobs(customer, car, from, to, minIncome, maxIncome);
+        @Parameter(description = "Job status", example = "IN_PROGRESS")
+        @RequestParam(required = false) JobStatus status,
+        
+        @Parameter(description = "Multiple job statuses (comma-separated)", example = "WAITING,IN_PROGRESS")
+        @RequestParam(required = false) List<JobStatus> statuses,
+        
+        @Parameter(description = "Job type", example = "OIL_CHANGE")
+        @RequestParam(required = false) JobType type,
+        
+        @Parameter(description = "Multiple job types (comma-separated)", example = "OIL_CHANGE,BRAKE_SERVICE")
+        @RequestParam(required = false) List<JobType> types,
+        
+        @Parameter(description = "Part name (partial match, case-insensitive)", example = "brake pad")
+        @RequestParam(required = false) String partName,
+        
+        @Parameter(description = "Minimum part cost", example = "50.00")
+        @RequestParam(required = false) BigDecimal minPartCost,
+        
+        @Parameter(description = "Maximum part cost", example = "500.00")
+        @RequestParam(required = false) BigDecimal maxPartCost) {
+        
+        JobSearchCriteria criteria = buildSearchCriteria(customerName, carModel, description, startDate, endDate, 
+                minIncome, maxIncome, status, statuses, type, types, partName, minPartCost, maxPartCost);
+        
+        List<JobDto> jobs = jobService.searchJobs(criteria, Pageable.unpaged()).getContent();
         return ResponseEntity.ok(jobs);
     }
 
@@ -197,6 +227,25 @@ public class JobController {
         return ResponseEntity.ok(updatedJob);
     }
 
+    @PatchMapping("/{id}/status")
+    @Operation(
+        summary = "Update job status",
+        description = "Updates only the status of an existing job. Useful for workflow management."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Job status updated successfully"),
+        @ApiResponse(responseCode = "404", description = "Job not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid status value")
+    })
+    public ResponseEntity<JobDto> updateJobStatus(
+        @Parameter(description = "Unique identifier of the job to update")
+        @PathVariable UUID id,
+        @Parameter(description = "New status for the job", example = "IN_PROGRESS")
+        @RequestParam JobStatus status) {
+        JobDto updatedJob = jobService.updateJobStatus(id, status);
+        return ResponseEntity.ok(updatedJob);
+    }
+
     @DeleteMapping("/{id}")
     @Operation(
         summary = "Delete a job",
@@ -211,5 +260,28 @@ public class JobController {
         @PathVariable UUID id) {
         jobService.deleteJob(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private JobSearchCriteria buildSearchCriteria(String customerName, String carModel, String description,
+                                                LocalDate startDate, LocalDate endDate, BigDecimal minIncome, 
+                                                BigDecimal maxIncome, JobStatus status, List<JobStatus> statuses,
+                                                JobType type, List<JobType> types, String partName, 
+                                                BigDecimal minPartCost, BigDecimal maxPartCost) {
+        JobSearchCriteria criteria = new JobSearchCriteria();
+        criteria.setCustomerName(customerName);
+        criteria.setCarModel(carModel);
+        criteria.setDescription(description);
+        criteria.setStartDate(startDate);
+        criteria.setEndDate(endDate);
+        criteria.setMinIncome(minIncome);
+        criteria.setMaxIncome(maxIncome);
+        criteria.setStatus(status);
+        criteria.setStatuses(statuses);
+        criteria.setType(type);
+        criteria.setTypes(types);
+        criteria.setPartName(partName);
+        criteria.setMinPartCost(minPartCost);
+        criteria.setMaxPartCost(maxPartCost);
+        return criteria;
     }
 } 

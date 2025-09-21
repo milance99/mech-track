@@ -6,6 +6,7 @@ import com.mechtrack.model.dto.JobDto;
 import com.mechtrack.model.dto.JobSearchCriteria;
 import com.mechtrack.model.dto.PartDto;
 import com.mechtrack.model.entity.Job;
+import com.mechtrack.model.enums.JobStatus;
 import com.mechtrack.repository.JobRepository;
 import com.mechtrack.repository.specification.JobSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,13 +29,7 @@ public class JobService {
     private final JobRepository jobRepository;
 
     public JobDto createJob(CreateJobRequest request) {
-        Job job = new Job();
-        job.setCustomerName(request.getCustomerName());
-        job.setCarModel(request.getCarModel());
-        job.setDescription(request.getDescription());
-        job.setDate(request.getDate());
-        job.setIncome(request.getIncome());
-
+        Job job = createJobFromRequest(request);
         Job savedJob = jobRepository.save(job);
         return convertToDto(savedJob);
     }
@@ -63,21 +56,6 @@ public class JobService {
         return convertToDto(job);
     }
 
-    @Transactional(readOnly = true)
-    public List<JobDto> searchJobs(String customerName, String carModel, LocalDate fromDate, LocalDate toDate, BigDecimal minIncome, BigDecimal maxIncome) {
-        JobSearchCriteria criteria = new JobSearchCriteria();
-        criteria.setCustomerName(customerName);
-        criteria.setCarModel(carModel);
-        criteria.setStartDate(fromDate);
-        criteria.setEndDate(toDate);
-        criteria.setMinIncome(minIncome);
-        criteria.setMaxIncome(maxIncome);
-        
-        Specification<Job> spec = JobSpecifications.withCriteria(criteria);
-        return jobRepository.findAll(spec).stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
 
     @Transactional(readOnly = true)
     public Page<JobDto> searchJobs(JobSearchCriteria criteria, Pageable pageable) {
@@ -91,12 +69,16 @@ public class JobService {
         Job job = jobRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Job", id.toString()));
 
-        job.setCustomerName(request.getCustomerName());
-        job.setCarModel(request.getCarModel());
-        job.setDescription(request.getDescription());
-        job.setDate(request.getDate());
-        job.setIncome(request.getIncome());
+        updateJobFromRequest(job, request);
+        Job savedJob = jobRepository.save(job);
+        return convertToDto(savedJob);
+    }
 
+    public JobDto updateJobStatus(UUID id, JobStatus status) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Job", id.toString()));
+        
+        job.setStatus(status);
         Job savedJob = jobRepository.save(job);
         return convertToDto(savedJob);
     }
@@ -108,33 +90,53 @@ public class JobService {
         jobRepository.deleteById(id);
     }
 
+    private Job createJobFromRequest(CreateJobRequest request) {
+        Job job = new Job();
+        updateJobFromRequest(job, request);
+        return job;
+    }
+
+    private void updateJobFromRequest(Job job, CreateJobRequest request) {
+        job.setCustomerName(request.getCustomerName());
+        job.setCarModel(request.getCarModel());
+        job.setDescription(request.getDescription());
+        job.setDate(request.getDate());
+        job.setIncome(request.getIncome());
+        job.setType(request.getType());
+    }
+
     private JobDto convertToDto(Job job) {
-        JobDto dto = new JobDto();
-        dto.setId(job.getId());
-        dto.setCustomerName(job.getCustomerName());
-        dto.setCarModel(job.getCarModel());
-        dto.setDescription(job.getDescription());
-        dto.setDate(job.getDate());
-        dto.setIncome(job.getIncome());
+        return new JobDto(
+                job.getId(),
+                job.getCustomerName(),
+                job.getCarModel(),
+                job.getDescription(),
+                job.getDate(),
+                job.getIncome(),
+                job.getStatus(),
+                job.getType(),
+                convertPartsToDtos(job)
+        );
+    }
 
-        if (job.getParts() != null) {
-            List<PartDto> partDtos = job.getParts().stream()
-                    .map(part -> {
-                        PartDto partDto = new PartDto();
-                        partDto.setId(part.getId());
-                        partDto.setName(part.getName());
-                        partDto.setCost(part.getCost());
-                        partDto.setInvoiceImageUrl(part.getInvoiceImageUrl());
-                        partDto.setPurchaseDate(part.getPurchaseDate());
-                        partDto.setJobId(job.getId());
-                        return partDto;
-                    })
-                    .collect(Collectors.toList());
-            dto.setParts(partDtos);
-        } else {
-            dto.setParts(new ArrayList<>());
+    private List<PartDto> convertPartsToDtos(Job job) {
+        if (job.getParts() == null) {
+            return new ArrayList<>();
         }
+        
+        return job.getParts().stream()
+                .map(this::convertPartToDto)
+                .collect(Collectors.toList());
+    }
 
-        return dto;
+    private PartDto convertPartToDto(com.mechtrack.model.entity.Part part) {
+        return new PartDto(
+                part.getId(),
+                part.getName(),
+                part.getCost(),
+                part.getInvoiceImageUrl(),
+                part.getPurchaseDate(),
+                part.getJob().getId()
+        );
     }
 } 

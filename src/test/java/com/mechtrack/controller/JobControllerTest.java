@@ -63,7 +63,7 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", equalTo(job.getId().toString())))
+                .andExpect(jsonPath("$[0].id", equalTo(job.id().toString())))
                 .andExpect(jsonPath("$[0].customerName", equalTo("John Smith")));
     }
 
@@ -74,13 +74,13 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
         var updateRequest = createJobRequest("Updated Customer", "Updated Car", "Updated Description", createJobRequest().getDate(), createJobRequest().getIncome());
 
         mvc.perform(
-                        put(JOBS_URL + "/{id}", job.getId())
+                        put(JOBS_URL + "/{id}", job.id())
                                 .accept(MediaType.APPLICATION_JSON)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(asJsonString(updateRequest)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", equalTo(job.getId().toString())))
+                .andExpect(jsonPath("$.id", equalTo(job.id().toString())))
                 .andExpect(jsonPath("$.customerName", equalTo(updateRequest.getCustomerName())))
                 .andExpect(jsonPath("$.carModel", equalTo(updateRequest.getCarModel())));
     }
@@ -91,12 +91,12 @@ class JobControllerTest extends AbstractMechtrackMvcTest {
         var job = jobService.createJob(createJobRequest());
 
         mvc.perform(
-                        delete(JOBS_URL + "/{id}", job.getId()))
+                        delete(JOBS_URL + "/{id}", job.id()))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
         mvc.perform(
-                        get(JOBS_URL + "/{id}", job.getId())
+                        get(JOBS_URL + "/{id}", job.id())
                                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }

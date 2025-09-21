@@ -125,15 +125,14 @@ public class AnalyticsService {
         
         BigDecimal netProfit = totalIncome.subtract(totalExpenses);
         
-        MonthlyAnalyticsDto analytics = new MonthlyAnalyticsDto();
-        analytics.setMonth(month);
-        analytics.setTotalIncome(totalIncome);
-        analytics.setTotalExpenses(totalExpenses);
-        analytics.setNetProfit(netProfit);
-        analytics.setJobCount(monthJobs.size());
-        analytics.setPartCount(monthParts.size());
-        
-        return analytics;
+        return new MonthlyAnalyticsDto(
+                month,
+                totalIncome,
+                totalExpenses,
+                netProfit,
+                monthJobs.size(),
+                monthParts.size()
+        );
     }
 
     private MonthlyAnalyticsDto createEmptyAnalytics(YearMonth month) {

@@ -137,14 +137,14 @@ public class AnalyticsController {
                         java.math.BigDecimal.ZERO,
                         0,
                         0
-                ), (accumulated, monthly) -> {
-                    accumulated.setTotalIncome(accumulated.getTotalIncome().add(monthly.getTotalIncome()));
-                    accumulated.setTotalExpenses(accumulated.getTotalExpenses().add(monthly.getTotalExpenses()));
-                    accumulated.setNetProfit(accumulated.getNetProfit().add(monthly.getNetProfit()));
-                    accumulated.setJobCount(accumulated.getJobCount() + monthly.getJobCount());
-                    accumulated.setPartCount(accumulated.getPartCount() + monthly.getPartCount());
-                    return accumulated;
-                });
+                ), (accumulated, monthly) -> new MonthlyAnalyticsDto(
+                    accumulated.month(),
+                    accumulated.totalIncome().add(monthly.totalIncome()),
+                    accumulated.totalExpenses().add(monthly.totalExpenses()),
+                    accumulated.netProfit().add(monthly.netProfit()),
+                    accumulated.jobCount() + monthly.jobCount(),
+                    accumulated.partCount() + monthly.partCount()
+                ));
         
         return ResponseEntity.ok(summary);
     }

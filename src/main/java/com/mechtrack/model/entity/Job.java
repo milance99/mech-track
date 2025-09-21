@@ -1,5 +1,7 @@
 package com.mechtrack.model.entity;
 
+import com.mechtrack.model.enums.JobStatus;
+import com.mechtrack.model.enums.JobType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,6 +37,14 @@ public class Job {
 
     @Column(precision = 10, scale = 2)
     private BigDecimal income;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private JobStatus status = JobStatus.WAITING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private JobType type = JobType.GENERAL_MAINTENANCE;
 
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Part> parts;

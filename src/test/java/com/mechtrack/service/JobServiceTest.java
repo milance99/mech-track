@@ -1,7 +1,12 @@
 package com.mechtrack.service;
 
 import com.mechtrack.AbstractMechtrackTest;
+import com.mechtrack.exception.EntityNotFoundException;
+import com.mechtrack.model.dto.CreateJobRequest;
 import com.mechtrack.model.dto.JobDto;
+import com.mechtrack.model.dto.JobSearchCriteria;
+import com.mechtrack.model.enums.JobStatus;
+import com.mechtrack.model.enums.JobType;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static com.mechtrack.provider.JobTestDataProvider.createJobRequest;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,9 +34,6 @@ class JobServiceTest extends AbstractMechtrackTest {
     
     @Autowired
     private EntityManager entityManager;
-    
-    @Autowired
-    private com.mechtrack.repository.JobRepository jobRepository;
 
     @Test
     @DisplayName("Test create job")
@@ -41,21 +44,6 @@ class JobServiceTest extends AbstractMechtrackTest {
         // Flush to ensure ID generation
         entityManager.flush();
         
-        // Debug: Check if any entities were actually saved
-        var allJobs = jobRepository.findAll();
-        System.out.println("Number of jobs in database: " + allJobs.size());
-        if (!allJobs.isEmpty()) {
-            var savedJob = allJobs.get(0);
-            System.out.println("Saved job ID: " + savedJob.getId());
-            System.out.println("Saved job customer: " + savedJob.getCustomerName());
-        }
-        
-        // Debug: Print the DTO we got back
-        System.out.println("DTO ID: " + job.getId());
-        System.out.println("DTO customer: " + job.getCustomerName());
-        System.out.println("DTO ID == null: " + (job.getId() == null));
-        System.out.println("DTO ID class: " + (job.getId() != null ? job.getId().getClass() : "null"));
-        
         assertThat(job)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("customerName", createJobRequest.getCustomerName())
@@ -64,14 +52,9 @@ class JobServiceTest extends AbstractMechtrackTest {
                 .hasFieldOrPropertyWithValue("date", createJobRequest.getDate())
                 .hasFieldOrPropertyWithValue("income", createJobRequest.getIncome());
         
-        // Add specific debugging for the ID assertion
-        System.out.println("About to check ID assertion...");
-        System.out.println("job.getId() before assertion: " + job.getId());
-        
-        // Try JUnit assertions instead of AssertJ
-        assertNotNull(job.getId(), "Job ID should not be null");
-        assertNotNull(job.getParts(), "Job parts should not be null");
-        assertTrue(job.getParts().isEmpty(), "Job parts should be empty");
+        assertNotNull(job.id(), "Job ID should not be null");
+        assertNotNull(job.parts(), "Job parts should not be null");
+        assertTrue(job.parts().isEmpty(), "Job parts should be empty");
     }
 
     @Test
@@ -80,9 +63,9 @@ class JobServiceTest extends AbstractMechtrackTest {
         var createJobRequest = createJobRequest();
         var job = underTest.createJob(createJobRequest);
         
-        assertThat(underTest.getJobById(job.getId()))
+        assertThat(underTest.getJobById(job.id()))
                 .isNotNull()
-                .hasFieldOrPropertyWithValue("id", job.getId())
+                .hasFieldOrPropertyWithValue("id", job.id())
                 .hasFieldOrPropertyWithValue("customerName", createJobRequest.getCustomerName())
                 .hasFieldOrPropertyWithValue("carModel", createJobRequest.getCarModel())
                 .hasFieldOrPropertyWithValue("description", createJobRequest.getDescription())
@@ -109,9 +92,9 @@ class JobServiceTest extends AbstractMechtrackTest {
                 new BigDecimal("300.00")
         );
         
-        assertThat(underTest.updateJob(job.getId(), updateJobRequest))
+        assertThat(underTest.updateJob(job.id(), updateJobRequest))
                 .isNotNull()
-                .hasFieldOrPropertyWithValue("id", job.getId())
+                .hasFieldOrPropertyWithValue("id", job.id())
                 .hasFieldOrPropertyWithValue("customerName", updateJobRequest.getCustomerName())
                 .hasFieldOrPropertyWithValue("carModel", updateJobRequest.getCarModel())
                 .hasFieldOrPropertyWithValue("description", updateJobRequest.getDescription())
@@ -125,9 +108,9 @@ class JobServiceTest extends AbstractMechtrackTest {
         var createJobRequest = createJobRequest();
         var job = underTest.createJob(createJobRequest);
         
-        underTest.deleteJob(job.getId());
+        underTest.deleteJob(job.id());
         
-        assertThatThrownBy(() -> underTest.getJobById(job.getId()))
+        assertThatThrownBy(() -> underTest.getJobById(job.id()))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Job not found");
     }
@@ -142,8 +125,8 @@ class JobServiceTest extends AbstractMechtrackTest {
         
         assertThat(jobs)
                 .hasSize(2)
-                .extracting(JobDto::getId)
-                .containsExactlyInAnyOrder(job1.getId(), job2.getId());
+                .extracting(JobDto::id)
+                .containsExactlyInAnyOrder(job1.id(), job2.id());
     }
 
     @Test
@@ -158,8 +141,8 @@ class JobServiceTest extends AbstractMechtrackTest {
                 .isNotNull();
         assertThat(jobsPage.getContent())
                 .hasSize(2)
-                .extracting(JobDto::getId)
-                .containsExactlyInAnyOrder(job1.getId(), job2.getId());
+                .extracting(JobDto::id)
+                .containsExactlyInAnyOrder(job1.id(), job2.id());
     }
 
     @Test
@@ -167,14 +150,15 @@ class JobServiceTest extends AbstractMechtrackTest {
     @Transactional
     void testSearchByCustomerName() {
         var job1 = underTest.createJob(createJobRequest("John Smith", "Car 1", "Description 1", LocalDate.now(), new BigDecimal("100.00")));
-        var job2 = underTest.createJob(createJobRequest("Mary Wilson", "Car 2", "Description 2", LocalDate.now(), new BigDecimal("200.00")));
-        
-        List<JobDto> jobs = underTest.searchJobs("Smith", null, null, null, null, null);
+
+        JobSearchCriteria criteria = new JobSearchCriteria();
+        criteria.setCustomerName("Smith");
+        List<JobDto> jobs = underTest.searchJobs(criteria, Pageable.unpaged()).getContent();
         
         assertThat(jobs)
                 .hasSize(1)
-                .extracting(JobDto::getId)
-                .containsExactly(job1.getId());
+                .extracting(JobDto::id)
+                .containsExactly(job1.id());
     }
 
     @Test
@@ -186,27 +170,103 @@ class JobServiceTest extends AbstractMechtrackTest {
         
         var job1 = underTest.createJob(createJobRequest("Customer 1", "Car 1", "Description 1", startDate, new BigDecimal("100.00")));
         var job2 = underTest.createJob(createJobRequest("Customer 2", "Car 2", "Description 2", endDate, new BigDecimal("200.00")));
-        var job3 = underTest.createJob(createJobRequest("Customer 3", "Car 3", "Description 3", outsideDate, new BigDecimal("300.00")));
+         underTest.createJob(createJobRequest("Customer 3", "Car 3", "Description 3", outsideDate, new BigDecimal("300.00")));
         
-        List<JobDto> jobs = underTest.searchJobs(null, null, startDate, endDate, null, null);
+        JobSearchCriteria criteria = new JobSearchCriteria();
+        criteria.setStartDate(startDate);
+        criteria.setEndDate(endDate);
+        List<JobDto> jobs = underTest.searchJobs(criteria, Pageable.unpaged()).getContent();
         
         assertThat(jobs)
                 .hasSize(2)
-                .extracting(JobDto::getId)
-                .containsExactlyInAnyOrder(job1.getId(), job2.getId());
+                .extracting(JobDto::id)
+                .containsExactlyInAnyOrder(job1.id(), job2.id());
     }
 
     @Test
     @DisplayName("Test search jobs with multiple criteria")
     void testSearchWithMultipleCriteria() {
         var job1 = underTest.createJob(createJobRequest("John Smith", "Toyota Camry", "Brake repair", LocalDate.of(2023, 12, 1), new BigDecimal("150.00")));
-        var job2 = underTest.createJob(createJobRequest("Mary Johnson", "Honda Civic", "Oil change", LocalDate.of(2023, 12, 5), new BigDecimal("75.00")));
-        
-        List<JobDto> jobs = underTest.searchJobs("John", "Toyota", null, null, null, null);
+        underTest.createJob(createJobRequest("Mary Johnson", "Honda Civic", "Oil change", LocalDate.of(2023, 12, 5), new BigDecimal("75.00")));
+
+        JobSearchCriteria criteria = new JobSearchCriteria();
+        criteria.setCustomerName("John");
+        criteria.setCarModel("Toyota");
+        List<JobDto> jobs = underTest.searchJobs(criteria, Pageable.unpaged()).getContent();
         
         assertThat(jobs)
                 .hasSize(1)
-                .extracting(JobDto::getId)
-                .containsExactly(job1.getId());
+                .extracting(JobDto::id)
+                .containsExactly(job1.id());
+    }
+
+    @Test
+    @DisplayName("Test create job with default status and required type")
+    void testCreateJobWithStatusAndType() {
+        CreateJobRequest request = createJobRequestWithType("John Smith", "Toyota Camry", "Oil change", 
+                LocalDate.of(2023, 12, 1), new BigDecimal("75.00"), JobType.OIL_CHANGE);
+        
+        JobDto createdJob = underTest.createJob(request);
+        
+        assertThat(createdJob).isNotNull();
+        assertThat(createdJob.status()).isEqualTo(JobStatus.WAITING);
+        assertThat(createdJob.type()).isEqualTo(JobType.OIL_CHANGE);
+        assertThat(createdJob.customerName()).isEqualTo("John Smith");
+    }
+
+    @Test
+    @DisplayName("Test update job status")
+    void testUpdateJobStatus() {
+        CreateJobRequest request = createJobRequestWithType("John Smith", "Toyota Camry", "Brake service", 
+                LocalDate.of(2023, 12, 1), new BigDecimal("150.00"), JobType.BRAKE_SERVICE);
+        JobDto createdJob = underTest.createJob(request);
+        
+        JobDto updatedJob = underTest.updateJobStatus(createdJob.id(), JobStatus.IN_PROGRESS);
+        
+        assertThat(updatedJob.status()).isEqualTo(JobStatus.IN_PROGRESS);
+        assertThat(updatedJob.type()).isEqualTo(JobType.BRAKE_SERVICE);
+        assertThat(updatedJob.id()).isEqualTo(createdJob.id());
+    }
+
+    @Test
+    @DisplayName("Test update job status with non-existent job")
+    void testUpdateJobStatusWithNonExistentJob() {
+        UUID nonExistentId = UUID.randomUUID();
+        
+        assertThatThrownBy(() -> underTest.updateJobStatus(nonExistentId, JobStatus.DONE))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Job")
+                .hasMessageContaining(nonExistentId.toString());
+    }
+
+    @Test
+    @DisplayName("Test job status workflow")
+    void testJobStatusWorkflow() {
+        CreateJobRequest request = createJobRequestWithType("John Smith", "Honda Civic", "Engine tune-up", 
+                LocalDate.of(2023, 12, 1), new BigDecimal("200.00"), JobType.ENGINE_TUNE_UP);
+        JobDto job = underTest.createJob(request);
+        
+        assertThat(job.status()).isEqualTo(JobStatus.WAITING);
+        
+        job = underTest.updateJobStatus(job.id(), JobStatus.IN_PROGRESS);
+        assertThat(job.status()).isEqualTo(JobStatus.IN_PROGRESS);
+        
+        job = underTest.updateJobStatus(job.id(), JobStatus.DONE);
+        assertThat(job.status()).isEqualTo(JobStatus.DONE);
+        
+        job = underTest.updateJobStatus(job.id(), JobStatus.WAITING);
+        assertThat(job.status()).isEqualTo(JobStatus.WAITING);
+    }
+
+    private CreateJobRequest createJobRequestWithType(String customerName, String carModel, String description, 
+                                                     LocalDate date, BigDecimal income, JobType type) {
+        CreateJobRequest request = new CreateJobRequest();
+        request.setCustomerName(customerName);
+        request.setCarModel(carModel);
+        request.setDescription(description);
+        request.setDate(date);
+        request.setIncome(income);
+        request.setType(type);
+        return request;
     }
 } 

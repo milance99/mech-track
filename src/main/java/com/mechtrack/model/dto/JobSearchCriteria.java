@@ -1,5 +1,7 @@
 package com.mechtrack.model.dto;
 
+import com.mechtrack.model.enums.JobStatus;
+import com.mechtrack.model.enums.JobType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -56,4 +59,20 @@ public class JobSearchCriteria {
     @Schema(description = "Filter jobs with total part cost less than or equal to this amount", 
             example = "500.00")
     private BigDecimal maxPartCost;
+
+    @Schema(description = "Filter jobs by status", 
+            example = "IN_PROGRESS")
+    private JobStatus status;
+
+    @Schema(description = "Filter jobs by multiple statuses", 
+            example = "[\"WAITING\", \"IN_PROGRESS\"]")
+    private List<JobStatus> statuses;
+
+    @Schema(description = "Filter jobs by type", 
+            example = "OIL_CHANGE")
+    private JobType type;
+
+    @Schema(description = "Filter jobs by multiple types", 
+            example = "[\"OIL_CHANGE\", \"BRAKE_SERVICE\"]")
+    private List<JobType> types;
 } 

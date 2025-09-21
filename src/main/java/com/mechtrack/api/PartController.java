@@ -110,12 +110,12 @@ public class PartController {
         
         PartDto part = partService.getPartById(id);
         
-        if (part.getInvoiceImageUrl() == null || part.getInvoiceImageUrl().isEmpty()) {
+        if (part.invoiceImageUrl() == null || part.invoiceImageUrl().isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         
         try {
-            Resource file = fileStorageService.load(part.getInvoiceImageUrl());
+            Resource file = fileStorageService.load(part.invoiceImageUrl());
             
             String contentDisposition = download ? "attachment" : "inline";
             String contentType = determineContentType(file.getFilename());

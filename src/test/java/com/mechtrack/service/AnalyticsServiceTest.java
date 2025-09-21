@@ -43,20 +43,20 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
         assertThat(analytics).hasSize(2);
         
         MonthlyAnalyticsDto january = analytics.stream()
-                .filter(a -> a.getMonth().equals(YearMonth.of(2024, 1)))
+                .filter(a -> a.month().equals(YearMonth.of(2024, 1)))
                 .findFirst()
                 .orElseThrow();
         
-        assertThat(january.getJobCount()).isEqualTo(3);
-        assertThat(january.getTotalIncome()).isEqualByComparingTo("450.00");
+        assertThat(january.jobCount()).isEqualTo(3);
+        assertThat(january.totalIncome()).isEqualByComparingTo("450.00");
         
         MonthlyAnalyticsDto february = analytics.stream()
-                .filter(a -> a.getMonth().equals(YearMonth.of(2024, 2)))
+                .filter(a -> a.month().equals(YearMonth.of(2024, 2)))
                 .findFirst()
                 .orElseThrow();
         
-        assertThat(february.getJobCount()).isEqualTo(1);
-        assertThat(february.getTotalIncome()).isEqualByComparingTo("300.00");
+        assertThat(february.jobCount()).isEqualTo(1);
+        assertThat(february.totalIncome()).isEqualByComparingTo("300.00");
     }
 
     @Test
@@ -66,11 +66,11 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
 
         assertThat(analytics).hasSize(12);
         assertThat(analytics).allSatisfy(monthlyAnalytics -> {
-            assertThat(monthlyAnalytics.getTotalIncome()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(monthlyAnalytics.getTotalExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(monthlyAnalytics.getNetProfit()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(monthlyAnalytics.getJobCount()).isEqualTo(0);
-            assertThat(monthlyAnalytics.getPartCount()).isEqualTo(0);
+            assertThat(monthlyAnalytics.totalIncome()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(monthlyAnalytics.totalExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(monthlyAnalytics.netProfit()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(monthlyAnalytics.jobCount()).isEqualTo(0);
+            assertThat(monthlyAnalytics.partCount()).isEqualTo(0);
         });
     }
 
@@ -88,8 +88,8 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
         List<MonthlyAnalyticsDto> analytics = analyticsService.getMonthlyAnalytics(YearMonth.of(2024, 1), YearMonth.of(2024, 12));
 
         assertThat(analytics).hasSize(12);
-        assertThat(analytics.stream().filter(a -> a.getJobCount() > 0))
-                .extracting(MonthlyAnalyticsDto::getMonth)
+        assertThat(analytics.stream().filter(a -> a.jobCount() > 0))
+                .extracting(MonthlyAnalyticsDto::month)
                 .containsExactlyInAnyOrder(YearMonth.of(2024, 1), YearMonth.of(2024, 3), YearMonth.of(2024, 12));
     }
 
@@ -105,12 +105,12 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
         List<MonthlyAnalyticsDto> analytics = analyticsService.getMonthlyAnalytics(YearMonth.of(2024, 6), YearMonth.of(2024, 6));
 
         MonthlyAnalyticsDto june = analytics.stream()
-                .filter(a -> a.getMonth().equals(YearMonth.of(2024, 6)))
+                .filter(a -> a.month().equals(YearMonth.of(2024, 6)))
                 .findFirst()
                 .orElseThrow();
         
-        assertThat(june.getJobCount()).isEqualTo(3);
-        assertThat(june.getTotalIncome()).isEqualByComparingTo("600.00");
+        assertThat(june.jobCount()).isEqualTo(3);
+        assertThat(june.totalIncome()).isEqualByComparingTo("600.00");
     }
 
     @Test
@@ -124,12 +124,12 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
         List<MonthlyAnalyticsDto> analytics = analyticsService.getMonthlyAnalytics(YearMonth.of(2024, 1), YearMonth.of(2024, 1));
 
         MonthlyAnalyticsDto january = analytics.stream()
-                .filter(a -> a.getMonth().equals(YearMonth.of(2024, 1)))
+                .filter(a -> a.month().equals(YearMonth.of(2024, 1)))
                 .findFirst()
                 .orElseThrow();
         
-        assertThat(january.getJobCount()).isEqualTo(2);
-        assertThat(january.getTotalIncome()).isEqualByComparingTo("100.00");
+        assertThat(january.jobCount()).isEqualTo(2);
+        assertThat(january.totalIncome()).isEqualByComparingTo("100.00");
     }
 
     @Test
@@ -148,22 +148,22 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
         assertThat(analytics).hasSize(7);
         
         for (int i = 1; i < analytics.size(); i++) {
-            assertThat(analytics.get(i).getDate()).isAfter(analytics.get(i-1).getDate());
+            assertThat(analytics.get(i).date()).isAfter(analytics.get(i-1).date());
         }
         
         DailyAnalyticsDto todayAnalytics = analytics.stream()
-                .filter(a -> a.getDate().equals(today))
+                .filter(a -> a.date().equals(today))
                 .findFirst()
                 .orElseThrow();
-        assertThat(todayAnalytics.getJobCount()).isEqualTo(1);
-        assertThat(todayAnalytics.getTotalIncome()).isEqualByComparingTo("100.00");
+        assertThat(todayAnalytics.jobCount()).isEqualTo(1);
+        assertThat(todayAnalytics.totalIncome()).isEqualByComparingTo("100.00");
         
         DailyAnalyticsDto yesterdayAnalytics = analytics.stream()
-                .filter(a -> a.getDate().equals(yesterday))
+                .filter(a -> a.date().equals(yesterday))
                 .findFirst()
                 .orElseThrow();
-        assertThat(yesterdayAnalytics.getJobCount()).isEqualTo(1);
-        assertThat(yesterdayAnalytics.getTotalIncome()).isEqualByComparingTo("200.00");
+        assertThat(yesterdayAnalytics.jobCount()).isEqualTo(1);
+        assertThat(yesterdayAnalytics.totalIncome()).isEqualByComparingTo("200.00");
     }
 
     @Test
@@ -179,13 +179,13 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
         assertThat(analytics).hasSize(30);
         
         long daysWithData = analytics.stream()
-                .mapToLong(DailyAnalyticsDto::getJobCount)
+                .mapToLong(DailyAnalyticsDto::jobCount)
                 .filter(count -> count > 0)
                 .count();
         assertThat(daysWithData).isEqualTo(2);
         
         long daysWithZeroIncome = analytics.stream()
-                .filter(a -> a.getTotalIncome().equals(BigDecimal.ZERO))
+                .filter(a -> a.totalIncome().equals(BigDecimal.ZERO))
                 .count();
         assertThat(daysWithZeroIncome).isEqualTo(28);
     }
@@ -198,11 +198,11 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
         assertThat(analytics).hasSize(90);
         
         assertThat(analytics).allSatisfy(dailyAnalytics -> {
-            assertThat(dailyAnalytics.getTotalIncome()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(dailyAnalytics.getTotalExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(dailyAnalytics.getNetProfit()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(dailyAnalytics.getJobCount()).isEqualTo(0);
-            assertThat(dailyAnalytics.getPartCount()).isEqualTo(0);
+            assertThat(dailyAnalytics.totalIncome()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(dailyAnalytics.totalExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(dailyAnalytics.netProfit()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(dailyAnalytics.jobCount()).isEqualTo(0);
+            assertThat(dailyAnalytics.partCount()).isEqualTo(0);
         });
     }
 
@@ -221,17 +221,17 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
         assertThat(analytics).hasSize(5);
         
         DailyAnalyticsDto testDayAnalytics = analytics.stream()
-                .filter(a -> a.getDate().equals(testDate))
+                .filter(a -> a.date().equals(testDate))
                 .findFirst()
                 .orElseThrow();
         
-        assertThat(testDayAnalytics.getJobCount()).isEqualTo(2);
-        assertThat(testDayAnalytics.getTotalIncome()).isEqualByComparingTo("400.00");
-        assertThat(testDayAnalytics.getNetProfit()).isEqualByComparingTo("400.00"); // No expenses
+        assertThat(testDayAnalytics.jobCount()).isEqualTo(2);
+        assertThat(testDayAnalytics.totalIncome()).isEqualByComparingTo("400.00");
+        assertThat(testDayAnalytics.netProfit()).isEqualByComparingTo("400.00"); // No expenses
         
         long daysWithZeroJobs = analytics.stream()
-                .filter(a -> !a.getDate().equals(testDate))
-                .mapToLong(DailyAnalyticsDto::getJobCount)
+                .filter(a -> !a.date().equals(testDate))
+                .mapToLong(DailyAnalyticsDto::jobCount)
                 .filter(count -> count == 0)
                 .count();
         assertThat(daysWithZeroJobs).isEqualTo(4);
@@ -247,12 +247,12 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
 
         DailyAnalyticsDto analytics = analyticsService.getDailyAnalytics(testDate);
 
-        assertThat(analytics.getDate()).isEqualTo(testDate);
-        assertThat(analytics.getJobCount()).isEqualTo(2);
-        assertThat(analytics.getTotalIncome()).isEqualByComparingTo("500.00");
-        assertThat(analytics.getTotalExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(analytics.getNetProfit()).isEqualByComparingTo("500.00");
-        assertThat(analytics.getPartCount()).isEqualTo(0);
+        assertThat(analytics.date()).isEqualTo(testDate);
+        assertThat(analytics.jobCount()).isEqualTo(2);
+        assertThat(analytics.totalIncome()).isEqualByComparingTo("500.00");
+        assertThat(analytics.totalExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(analytics.netProfit()).isEqualByComparingTo("500.00");
+        assertThat(analytics.partCount()).isEqualTo(0);
     }
 
     @Test
@@ -262,12 +262,12 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
 
         DailyAnalyticsDto analytics = analyticsService.getDailyAnalytics(testDate);
 
-        assertThat(analytics.getDate()).isEqualTo(testDate);
-        assertThat(analytics.getJobCount()).isEqualTo(0);
-        assertThat(analytics.getTotalIncome()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(analytics.getTotalExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(analytics.getNetProfit()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(analytics.getPartCount()).isEqualTo(0);
+        assertThat(analytics.date()).isEqualTo(testDate);
+        assertThat(analytics.jobCount()).isEqualTo(0);
+        assertThat(analytics.totalIncome()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(analytics.totalExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(analytics.netProfit()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(analytics.partCount()).isEqualTo(0);
     }
 
     @Test
@@ -282,9 +282,9 @@ class AnalyticsServiceTest extends AbstractMechtrackTest {
 
         DailyAnalyticsDto analytics = analyticsService.getDailyAnalytics(testDate);
 
-        assertThat(analytics.getJobCount()).isEqualTo(4);
-        assertThat(analytics.getTotalIncome()).isEqualByComparingTo("600.00");
-        assertThat(analytics.getNetProfit()).isEqualByComparingTo("600.00");
+        assertThat(analytics.jobCount()).isEqualTo(4);
+        assertThat(analytics.totalIncome()).isEqualByComparingTo("600.00");
+        assertThat(analytics.netProfit()).isEqualByComparingTo("600.00");
     }
 
     @Test

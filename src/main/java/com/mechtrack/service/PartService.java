@@ -189,13 +189,13 @@ public class PartService {
     }
 
     private PartDto convertToDto(Part part) {
-        PartDto dto = new PartDto();
-        dto.setId(part.getId());
-        dto.setName(part.getName());
-        dto.setCost(part.getCost());
-        dto.setInvoiceImageUrl(part.getInvoiceImageUrl());
-        dto.setPurchaseDate(part.getPurchaseDate());
-        dto.setJobId(part.getJob() != null ? part.getJob().getId() : null);
-        return dto;
+        return new PartDto(
+                part.getId(),
+                part.getName(),
+                part.getCost(),
+                part.getInvoiceImageUrl(),
+                part.getPurchaseDate(),
+                part.getJob() != null ? part.getJob().getId() : null
+        );
     }
 }

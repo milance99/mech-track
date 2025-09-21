@@ -3,6 +3,8 @@ package com.mechtrack.provider;
 import com.mechtrack.model.dto.CreateJobRequest;
 import com.mechtrack.model.dto.JobDto;
 import com.mechtrack.model.dto.JobSearchCriteria;
+import com.mechtrack.model.enums.JobStatus;
+import com.mechtrack.model.enums.JobType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,17 +17,25 @@ import java.util.UUID;
 public class JobTestDataProvider {
 
     public static CreateJobRequest createJobRequest() {
-        return new CreateJobRequest(
-                "John Smith",
-                "Toyota Camry 2020",
-                "Oil change and brake inspection",
-                LocalDate.of(2023, 12, 1),
-                new BigDecimal("150.00")
-        );
+        CreateJobRequest request = new CreateJobRequest();
+        request.setCustomerName("John Smith");
+        request.setCarModel("Toyota Camry 2020");
+        request.setDescription("Oil change and brake inspection");
+        request.setDate(LocalDate.of(2023, 12, 1));
+        request.setIncome(new BigDecimal("150.00"));
+        request.setType(JobType.GENERAL_MAINTENANCE);
+        return request;
     }
 
     public static CreateJobRequest createJobRequest(String customerName, String carModel, String description, LocalDate date, BigDecimal income) {
-        return new CreateJobRequest(customerName, carModel, description, date, income);
+        CreateJobRequest request = new CreateJobRequest();
+        request.setCustomerName(customerName);
+        request.setCarModel(carModel);
+        request.setDescription(description);
+        request.setDate(date);
+        request.setIncome(income);
+        request.setType(JobType.GENERAL_MAINTENANCE);
+        return request;
     }
 
     public static JobDto createJobDto() {
@@ -36,6 +46,8 @@ public class JobTestDataProvider {
                 "Oil change and brake inspection",
                 LocalDate.of(2023, 12, 1),
                 new BigDecimal("150.00"),
+                JobStatus.WAITING,
+                JobType.GENERAL_MAINTENANCE,
                 List.of()
         );
     }
@@ -48,67 +60,66 @@ public class JobTestDataProvider {
                 "Standard repair work",
                 LocalDate.now(),
                 new BigDecimal("100.00"),
+                JobStatus.WAITING,
+                JobType.GENERAL_MAINTENANCE,
                 List.of()
         );
     }
 
     public static JobSearchCriteria createJobSearchCriteria() {
-        return new JobSearchCriteria(
-                "John",
-                "Toyota",
-                "brake",
-                LocalDate.of(2023, 1, 1),
-                LocalDate.of(2023, 12, 31),
-                new BigDecimal("100.00"),
-                new BigDecimal("1000.00"),
-                "brake pad",
-                new BigDecimal("50.00"),
-                new BigDecimal("500.00")
-        );
+        JobSearchCriteria criteria = new JobSearchCriteria();
+        criteria.setCustomerName("John");
+        criteria.setCarModel("Toyota");
+        criteria.setDescription("brake");
+        criteria.setStartDate(LocalDate.of(2023, 1, 1));
+        criteria.setEndDate(LocalDate.of(2023, 12, 31));
+        criteria.setMinIncome(new BigDecimal("100.00"));
+        criteria.setMaxIncome(new BigDecimal("1000.00"));
+        criteria.setPartName("brake pad");
+        criteria.setMinPartCost(new BigDecimal("50.00"));
+        criteria.setMaxPartCost(new BigDecimal("500.00"));
+        criteria.setStatus(JobStatus.IN_PROGRESS);
+        criteria.setType(JobType.BRAKE_SERVICE);
+        return criteria;
     }
 
     public static JobSearchCriteria createJobSearchCriteria(String customerName, String carModel) {
-        return new JobSearchCriteria(
-                customerName,
-                carModel,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        JobSearchCriteria criteria = new JobSearchCriteria();
+        criteria.setCustomerName(customerName);
+        criteria.setCarModel(carModel);
+        return criteria;
     }
 
     public static CreateJobRequest createInvalidJobRequest() {
-        return new CreateJobRequest(
-                "", // Invalid: empty customer name
-                "", // Invalid: empty car model
-                "", // Invalid: empty description
-                null, // Invalid: null date
-                null // Invalid: null income
-        );
+        CreateJobRequest request = new CreateJobRequest();
+        request.setCustomerName(""); // Invalid: empty customer name
+        request.setCarModel(""); // Invalid: empty car model
+        request.setDescription(""); // Invalid: empty description
+        request.setDate(null); // Invalid: null date
+        request.setIncome(null); // Invalid: null income
+        request.setType(null); // Invalid: null type
+        return request;
     }
 
     public static CreateJobRequest createJobRequestWithNegativeIncome() {
-        return new CreateJobRequest(
-                "Test Customer",
-                "Test Car",
-                "Test Description",
-                LocalDate.now(),
-                new BigDecimal("-100.00") // Invalid: negative income
-        );
+        CreateJobRequest request = new CreateJobRequest();
+        request.setCustomerName("Test Customer");
+        request.setCarModel("Test Car");
+        request.setDescription("Test Description");
+        request.setDate(LocalDate.now());
+        request.setIncome(new BigDecimal("-100.00")); // Invalid: negative income
+        request.setType(JobType.GENERAL_MAINTENANCE);
+        return request;
     }
 
     public static CreateJobRequest createJobRequestWithFutureDate() {
-        return new CreateJobRequest(
-                "Test Customer",
-                "Test Car",
-                "Test Description",
-                LocalDate.now().plusDays(1), // Invalid: future date
-                new BigDecimal("100.00")
-        );
+        CreateJobRequest request = new CreateJobRequest();
+        request.setCustomerName("Test Customer");
+        request.setCarModel("Test Car");
+        request.setDescription("Test Description");
+        request.setDate(LocalDate.now().plusDays(1)); // Invalid: future date
+        request.setIncome(new BigDecimal("100.00"));
+        request.setType(JobType.GENERAL_MAINTENANCE);
+        return request;
     }
 } 
