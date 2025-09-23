@@ -1,5 +1,9 @@
--- V2__add_job_status_and_type.sql
--- Add status and type columns to job table
+-- V3__fix_job_status_and_type_columns.sql
+-- Fix status and type columns that may have been partially created
+
+-- Drop existing columns if they exist (in case they were created without proper constraints)
+ALTER TABLE job DROP COLUMN IF EXISTS status;
+ALTER TABLE job DROP COLUMN IF EXISTS type;
 
 -- Add status column (nullable first)
 ALTER TABLE job ADD COLUMN status VARCHAR(20);
@@ -31,8 +35,5 @@ ALTER TABLE job ADD CONSTRAINT chk_job_type
                     'GENERAL_MAINTENANCE', 'BODYWORK', 'OTHER'));
 
 -- Create indexes for better query performance
-CREATE INDEX idx_job_status ON job(status);
-CREATE INDEX idx_job_type ON job(type);
-
--- Update existing jobs to have default values (already handled by DEFAULT clause)
--- All existing jobs will automatically get WAITING status and GENERAL_MAINTENANCE type
+CREATE INDEX IF NOT EXISTS idx_job_status ON job(status);
+CREATE INDEX IF NOT EXISTS idx_job_type ON job(type);
